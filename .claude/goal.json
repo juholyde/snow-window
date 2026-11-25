@@ -56,7 +56,7 @@
       "id": "t3",
       "title": "Create the GitHub repo, set Pages + secrets, deploy",
       "kind": "build",
-      "status": "todo",
+      "status": "done",
       "importance": 5,
       "size": "S",
       "milestone": "m1",
@@ -247,7 +247,7 @@
       ]
     }
   ],
-  "next": "t3",
+  "next": "t15",
   "questions": [
     {
       "question": "Season range",
