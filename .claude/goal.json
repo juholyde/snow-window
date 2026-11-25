@@ -42,7 +42,7 @@
       "id": "t2",
       "title": "Register snow_window in the Supabase sandbox (APP.md: anonymous sign-in allowed, join_mode open) and push the migration",
       "kind": "build",
-      "status": "doing",
+      "status": "done",
       "importance": 5,
       "size": "S",
       "milestone": "m1",
@@ -247,7 +247,7 @@
       ]
     }
   ],
-  "next": "t2",
+  "next": "t3",
   "questions": [
     {
       "question": "Season range",
