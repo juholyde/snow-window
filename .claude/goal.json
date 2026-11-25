@@ -122,14 +122,14 @@
     },
     {
       "id": "t8",
-      "title": "Place the remaining Codex art (Rufus, sun, tycoon skier) in the app",
+      "title": "Place the remaining Codex art (sun, tycoon skier) in the app",
       "kind": "build",
       "status": "todo",
       "importance": 3,
       "size": "S",
       "milestone": "m1",
-      "why": "Codex's set is committed in public/art (85c628b) and the panorama, wordmark and favicon are in use. Rufus lost his spot when the empty-board state went away with crews; sun and tycoon skier are not placed yet. Raw drafts stay untracked in generated_images/.",
-      "doneWhen": "Rufus, sun and tycoon skier each have a place (e.g. welcome card, empty Trips, Snow windows) or Juho drops them.",
+      "why": "Codex's set is in public/art (85c628b). Panorama, wordmark, favicon in use; Rufus is back in the crew-of-one invite band (3114690). Sun and tycoon skier not placed yet. Raw drafts stay untracked in generated_images/.",
+      "doneWhen": "Sun and tycoon skier each have a place or Juho drops them.",
       "dependsOn": [
         "t6"
       ]
@@ -230,6 +230,20 @@
       "doneWhen": "Juho chose yes (setting turned on, Google button added) or no (spec notes email only).",
       "dependsOn": [
         "t2"
+      ]
+    },
+    {
+      "id": "t16",
+      "title": "Full-width timeline: crew sheet from the header, day strip under the board, trip form under the Suggest timeline",
+      "kind": "build",
+      "status": "done",
+      "importance": 4,
+      "size": "S",
+      "milestone": "m1",
+      "why": "Juho 2026-11-25: the timeline needs the full width.",
+      "doneWhen": "Commit 3114690; checked desktop and phone.",
+      "dependsOn": [
+        "t14"
       ]
     }
   ],
