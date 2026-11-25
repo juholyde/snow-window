@@ -7,6 +7,9 @@ import { HOLIDAYS, KEY_DATES, SEASON } from './config/calendar'
 import { type Day, eachDay, formatDayMonth, formatLong, todayLocal } from './lib/dates'
 import { countByDay, markDay, type Person, type TripWindow } from './lib/overlap'
 import { MAX_PEOPLE } from './lib/rules'
+import { RESORTS } from './config/resorts'
+import { type Forecasts, loadForecasts } from './lib/weather'
+import AppIcon from './components/AppIcon.vue'
 import { type BoardStore, claimLink, parseClaim, TokenKeeper } from './lib/store'
 
 const props = defineProps<{ store: BoardStore }>()
@@ -21,6 +24,21 @@ const focused = ref<Day | null>(null)
 const highlight = ref<{ start: Day; end: Day } | null>(null)
 const managing = ref<string | null>(null)
 const tokenVersion = ref(0)
+const forecasts = shallowRef<Forecasts | null>(null)
+const forecastError = ref(false)
+const resortId = ref(localStorage.getItem('snow-window:resort') ?? RESORTS[0]?.id ?? '')
+function pickResort(id: string) {
+  resortId.value = id
+  localStorage.setItem('snow-window:resort', id)
+}
+async function refreshForecast() {
+  try {
+    forecasts.value = await loadForecasts(RESORTS, localStorage)
+    forecastError.value = false
+  } catch {
+    forecastError.value = true
+  }
+}
 const timeline = ref<InstanceType<typeof AvailabilityTimeline> | null>(null)
 
 const editable = computed(() => {
@@ -114,12 +132,21 @@ const focusInfo = computed(() => {
   const d = focused.value
   if (!d) return null
   const free = people.value.filter((p) => p.days.includes(d))
-  return { day: d, mark: markDay(d), free }
+  const weather = RESORTS.flatMap((r) => {
+    const w = forecasts.value?.[r.id]?.[d]
+    return w ? [{ resort: r, w }] : []
+  }).sort((a, b) => b.w.snowCm - a.w.snowCm)
+  return { day: d, mark: markDay(d), free, weather }
 })
 
 // Someone else's edits show up within half a minute, and at once when you come back to the tab.
 let poll: ReturnType<typeof setInterval> | undefined
-const onVisible = () => document.visibilityState === 'visible' && refresh()
+let weatherPoll: ReturnType<typeof setInterval> | undefined
+const onVisible = () => {
+  if (document.visibilityState !== 'visible') return
+  refresh()
+  refreshForecast()
+}
 
 onMounted(async () => {
   const claim = parseClaim(location.hash)
@@ -136,25 +163,34 @@ onMounted(async () => {
   const start = todayLocal() > SEASON.start && todayLocal() <= SEASON.end ? todayLocal() : SEASON.start
   timeline.value?.scrollToDay(start, false)
   poll = setInterval(refresh, 30_000)
+  refreshForecast()
+  weatherPoll = setInterval(refreshForecast, 30 * 60_000)
   document.addEventListener('visibilitychange', onVisible)
 })
 onBeforeUnmount(() => {
   clearInterval(poll)
+  clearInterval(weatherPoll)
   document.removeEventListener('visibilitychange', onVisible)
 })
 </script>
 
 <template>
   <header class="hero">
-    <svg class="ridge" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M0 120 L0 78 L90 40 L150 62 L260 8 L340 58 L410 34 L520 86 L600 30 L700 70 L790 18 L880 64 L960 44 L1060 90 L1130 52 L1200 70 L1200 120 Z" />
-      <path class="snowcap" d="M228 26 L260 8 L292 26 L276 22 L262 30 L246 22 Z M762 36 L790 18 L818 36 L804 32 L790 40 L776 32 Z" />
-    </svg>
     <div class="hero-inner">
-      <p class="eyebrow">Season 2026–27 · Pyrenees, Sierra Nevada &amp; Andorra</p>
       <h1>Snow Window</h1>
-      <p class="lede">Add yourself, mark the days you could go skiing or riding, and see when the whole crew is free.</p>
+      <p class="lede">
+        Add yourself, mark the days you could ski or ride this season, and see when the whole crew is free.
+        <span class="where">Pyrenees · Andorra · Sierra Nevada · Dec 2026 – Apr 2027</span>
+      </p>
     </div>
+    <svg class="range" viewBox="0 0 1440 260" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <circle class="sun" cx="1130" cy="86" r="46" />
+      <path class="far" d="M0 260V150l120-52 90 38 150-96 110 70 80-34 140 88 120-74 110 44 170-112 120 82 90-30 140 70V260Z" />
+      <path class="far-snow" d="M332 58L360 40l28 18-14-4-12 8-14-9zM1057 44l33-22 32 22-16-4-14 10-16-9z" />
+      <path class="near" d="M0 260V196l160-70 140 64 120-44 160 82 140-58 170 54 130-80 190 72 130-30V260Z" />
+      <path class="near-snow" d="M123 142l37-16 35 16-17-3-16 8-20-8zM994 160l26-16 42 16-18-4-18 8-18-8z" />
+      <path class="ground" d="M0 260v-26c240-20 480-24 720-14s480 12 720-6v46Z" />
+    </svg>
   </header>
 
   <main>
@@ -169,6 +205,7 @@ onBeforeUnmount(() => {
         <i class="sw sw-key" /> {{ k.name }} · {{ formatDayMonth(k.start) }}–{{ formatDayMonth(k.end) }}
       </span>
       <span><i class="sw sw-free" /> Free</span>
+      <span><i class="sw sw-fresh" /> Fresh snow ≥ 5 cm</span>
       <span><i class="sw sw-all" /> Everyone free</span>
     </div>
 
@@ -181,6 +218,9 @@ onBeforeUnmount(() => {
         :counts="counts"
         :focused="focused"
         :highlight="highlight"
+        :resort-id="resortId"
+        :forecast="forecasts?.[resortId] ?? null"
+        @resort="pickResort"
         @change="change"
         @focus="(d) => (focused = d)"
         @manage="(id) => (managing = managing === id ? null : id)"
@@ -199,7 +239,7 @@ onBeforeUnmount(() => {
       <strong>{{ managed.name }}</strong>
       <button type="button" class="ghost" @click="copyLink(managed)">Copy edit link for another device</button>
       <button type="button" class="ghost danger" @click="remove(managed)">Remove my row</button>
-      <button type="button" class="ghost" aria-label="Close" @click="managing = null">✕</button>
+      <button type="button" class="ghost icon-only" aria-label="Close" @click="managing = null"><AppIcon name="close" /></button>
     </div>
 
     <div class="below">
@@ -215,6 +255,15 @@ onBeforeUnmount(() => {
           <strong>{{ focusInfo.free.length }} of {{ people.length }}</strong> free<span v-if="focusInfo.free.length">:</span>
           <span v-for="p in focusInfo.free" :key="p.id" class="who">{{ p.emoji }} {{ p.name }}</span>
         </p>
+        <ul v-if="focusInfo.weather.length" class="fc-list">
+          <li v-for="x in focusInfo.weather" :key="x.resort.id" :class="{ fresh: x.w.snowCm >= 5 }">
+            <AppIcon :name="x.w.kind" :size="18" />
+            <span class="fc-resort">{{ x.resort.name }}</span>
+            <span class="fc-num">{{ x.w.snowCm ? `${x.w.snowCm} cm` : '' }}</span>
+            <span class="fc-num muted">{{ x.w.tMin }}° / {{ x.w.tMax }}°</span>
+          </li>
+        </ul>
+        <p v-else class="muted-note">No forecast for this day yet: forecasts reach 16 days ahead.</p>
       </section>
       <BestWindows :counts="counts" :people="marked" :waiting="people.length - marked" @pick="pickWindow" />
       <section class="holidays">
@@ -232,7 +281,9 @@ onBeforeUnmount(() => {
   </main>
 
   <footer class="foot">
-    No sign-in: anyone with the link can add a row; only the device that made a row can change it. Up to {{ MAX_PEOPLE }} people.
+    <p v-if="forecastError" class="fc-error">Couldn't reach the weather service. Showing the last forecast, if there is one.</p>
+    <p>No sign-in: anyone with the link can add a row; only the device that made a row can change it. Up to {{ MAX_PEOPLE }} people.</p>
+    <p>Weather from <a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a>, 16 days ahead, refreshed every 30 minutes.</p>
   </footer>
 
   <div v-if="toast" class="toast" :class="{ error: toast.error }" role="status">{{ toast.text }}</div>

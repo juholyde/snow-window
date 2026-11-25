@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
 import { MAX_NAME } from '../lib/rules'
+import AppIcon from './AppIcon.vue'
 
 defineProps<{ full: boolean; busy: boolean }>()
 const emit = defineEmits<{ add: [name: string, emoji: string] }>()
@@ -30,7 +31,7 @@ function submit() {
   <div class="add">
     <p v-if="full" class="add-full">The board has 20 people, its limit for now.</p>
     <button v-else-if="!open" type="button" class="add-open" @click="start">
-      <span class="plus">+</span> Add yourself
+      <AppIcon name="plus" /> Add yourself
     </button>
     <form v-else class="add-form" @submit.prevent="submit">
       <fieldset class="emoji-pick">

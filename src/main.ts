@@ -3,6 +3,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import { type BoardStore, LocalStore } from './lib/store'
 import { SupabaseStore } from './lib/supabaseStore'
+import '@fontsource-variable/big-shoulders-display'
 import './style.css'
 
 const { VITE_SUPABASE_URL: url, VITE_SUPABASE_PUBLISHABLE_KEY: key } = import.meta.env

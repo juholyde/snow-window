@@ -3,6 +3,9 @@ import { computed, ref } from 'vue'
 import { type Day, formatMonth, todayLocal } from '../lib/dates'
 import { type DayMark, markDay, type Person } from '../lib/overlap'
 import { modeFor, type PaintMode, paint } from '../lib/selection'
+import { RESORTS } from '../config/resorts'
+import type { DayWeather } from '../lib/weather'
+import AppIcon from './AppIcon.vue'
 
 const props = defineProps<{
   days: Day[]
@@ -11,12 +14,15 @@ const props = defineProps<{
   counts: Map<Day, number>
   focused: Day | null
   highlight: { start: Day; end: Day } | null
+  resortId: string
+  forecast: Record<Day, DayWeather> | null
 }>()
 
 const emit = defineEmits<{
   change: [id: string, days: Day[]]
   focus: [day: Day]
   manage: [id: string]
+  resort: [id: string]
 }>()
 
 const today = todayLocal()
@@ -168,8 +174,36 @@ defineExpose({ scrollToDay })
           :aria-label="`${d}: ${counts.get(d) ?? 0} of ${total} free`"
           @click="emit('focus', d)"
         >
-          <span v-if="heat(d) === 'all'">✓</span>
+          <AppIcon v-if="heat(d) === 'all'" name="check" :size="16" />
           <span v-else-if="counts.get(d)">{{ counts.get(d) }}</span>
+        </button>
+      </div>
+
+      <!-- Forecast -->
+      <div class="name forecast-name">
+        <label class="resort-pick">
+          <small>Forecast at</small>
+          <select :value="resortId" @change="emit('resort', ($event.target as HTMLSelectElement).value)">
+            <option v-for="r in RESORTS" :key="r.id" :value="r.id">{{ r.name }}</option>
+          </select>
+        </label>
+      </div>
+      <div class="row forecast-row">
+        <button
+          v-for="d in days"
+          :key="d"
+          type="button"
+          class="cell forecast-cell"
+          :class="[columnClass(d), { fresh: (forecast?.[d]?.snowCm ?? 0) >= 5, none: !forecast?.[d] }]"
+          :data-day="d"
+          :aria-label="forecast?.[d] ? `${d}: ${forecast[d].kind}, ${forecast[d].snowCm} cm snow, ${forecast[d].tMin} to ${forecast[d].tMax} °C` : `${d}: no forecast yet`"
+          @click="emit('focus', d)"
+        >
+          <template v-if="forecast?.[d]">
+            <AppIcon :name="forecast[d].kind" :size="16" />
+            <span v-if="forecast[d].snowCm" class="fc-snow">{{ forecast[d].snowCm }}</span>
+            <span v-else class="fc-temp">{{ forecast[d].tMax }}°</span>
+          </template>
         </button>
       </div>
 
@@ -189,7 +223,7 @@ defineExpose({ scrollToDay })
             :aria-label="`Options for ${p.name}`"
             @click="emit('manage', p.id)"
           >
-            ⋯
+            <AppIcon name="more" />
           </button>
         </div>
         <div class="row" :class="{ editable: editable.has(p.id) }">
