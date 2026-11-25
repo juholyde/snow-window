@@ -5,7 +5,7 @@ import { MAX_CREW_NAME, MAX_PEOPLE } from '../lib/rules'
 import type { Crew } from '../lib/store'
 import AppIcon from './AppIcon.vue'
 
-/** The crew beside the board: who's in, the invite link, and the owner's controls. */
+/** The current crew in the crew sheet: who's in, the invite link, and the owner's controls. */
 const props = defineProps<{ crew: Crew; people: Person[]; me: string; busy: boolean }>()
 const emit = defineEmits<{
   rename: [name: string]

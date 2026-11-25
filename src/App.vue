@@ -4,7 +4,7 @@ import AccountDialog from './components/AccountDialog.vue'
 import AppIcon from './components/AppIcon.vue'
 import AvailabilityTimeline from './components/AvailabilityTimeline.vue'
 import BestWindows from './components/BestWindows.vue'
-import CrewPanel from './components/CrewPanel.vue'
+import CrewSheet from './components/CrewSheet.vue'
 import ResortsTab from './components/ResortsTab.vue'
 import TripsTab, { type TripsView } from './components/TripsTab.vue'
 import WelcomeCard from './components/WelcomeCard.vue'
@@ -33,6 +33,7 @@ const preview = shallowRef<CrewPreview | null>(null)
 const badInvite = ref(false)
 const creating = ref(false)
 const accountOpen = ref(false)
+const crewOpen = ref(false)
 const startError = ref<string | null>(null)
 
 const people = shallowRef<Person[]>([])
@@ -244,6 +245,7 @@ async function leaveCrew() {
   const c = crew.value
   if (!c || !window.confirm(`Leave ${c.name}? Your suggestions and answers there go too.`)) return
   if (!(await act(() => props.store.leaveCrew(c.id), `You left ${c.name}.`))) return
+  crewOpen.value = false
   selectCrew(null)
   await loadMine()
 }
@@ -281,12 +283,17 @@ async function signOut() {
   await start()
 }
 
-function onCrewSelect(e: Event) {
-  const value = (e.target as HTMLSelectElement).value
-  if (value === '+new') {
-    creating.value = true
-    ;(e.target as HTMLSelectElement).value = crewId.value ?? ''
-  } else selectCrew(value)
+function pickCrew(id: string) {
+  crewOpen.value = false
+  if (id !== crewId.value) selectCrew(id)
+}
+function newCrew() {
+  crewOpen.value = false
+  creating.value = true
+}
+function openAccount() {
+  crewOpen.value = false
+  accountOpen.value = true
 }
 
 type Tab = 'board' | 'windows' | 'trips' | 'resorts'
@@ -412,13 +419,13 @@ onBeforeUnmount(() => {
           <p class="tagline">December 2026 – April 2027</p>
         </div>
         <div v-if="session && profile" class="account-bar">
-          <label v-if="crews.length" class="crew-switch">
-            <span class="visually-hidden">Crew</span>
-            <select :value="crewId ?? ''" @change="onCrewSelect">
-              <option v-for="c in crews" :key="c.id" :value="c.id">{{ c.name }}</option>
-              <option value="+new">+ New crew</option>
-            </select>
-          </label>
+          <button v-if="crew && !welcome" type="button" class="crew-button" aria-haspopup="dialog" @click="crewOpen = true">
+            <span class="crew-faces" aria-hidden="true">
+              <span v-for="p in people.slice(0, 3)" :key="p.id">{{ p.emoji }}</span>
+            </span>
+            <span class="crew-button-name">{{ crew.name }}</span>
+            <small class="crew-button-count">{{ people.length || crew.members }}</small>
+          </button>
           <button type="button" class="me-button" :aria-label="`You: ${profile.name}`" @click="accountOpen = true">
             <span class="avatar">{{ profile.emoji }}</span>
             <span v-if="session.guest" class="me-guest">Guest</span>
@@ -477,6 +484,9 @@ onBeforeUnmount(() => {
         <div class="board">
           <div class="board-top">
             <h2 class="board-title">Availability board</h2>
+            <button type="button" class="invite-button" :disabled="people.length >= MAX_PEOPLE" @click="copyInvite">
+              <AppIcon name="plus" /> Invite
+            </button>
             <details class="board-key">
               <summary>Calendar key</summary>
               <div class="legend">
@@ -505,59 +515,44 @@ onBeforeUnmount(() => {
             @focus="(d) => (focused = d)"
             @manage="accountOpen = true"
           />
-        </div>
 
-        <aside class="side" aria-label="Details">
-          <p v-if="session.guest" class="guest-note">
-            You're a guest on this device.
-            <button type="button" class="link-button" @click="accountOpen = true">Save your account</button>
-            to keep your crews.
-          </p>
-
-          <section v-if="focusInfo" class="day-card" aria-live="polite">
-            <h2>{{ formatLong(focusInfo.day) }}</h2>
-            <p v-if="focusInfo.mark.holiday || focusInfo.mark.keyDate || focusInfo.mark.weekend" class="marks">
+          <section v-if="focusInfo" class="day-strip" aria-live="polite" :aria-label="formatLong(focusInfo.day)">
+            <div class="day-strip-who">
+              <h3>{{ formatLong(focusInfo.day) }}</h3>
               <span v-if="focusInfo.mark.holiday" class="tag holiday-tag">{{ focusInfo.mark.holiday }}</span>
               <span v-if="focusInfo.mark.keyDate" class="tag key-tag">{{ focusInfo.mark.keyDate }}</span>
-              <span v-if="focusInfo.mark.weekend" class="tag weekend-tag">Weekend</span>
-            </p>
-            <p>
-              <strong>{{ focusInfo.free.length }} of {{ people.length }}</strong> free<span v-if="focusInfo.free.length">:</span>
-              <span v-for="p in focusInfo.free" :key="p.id" class="who">{{ p.emoji }} {{ p.name }}</span>
-            </p>
-            <ul v-if="focusInfo.weather.length" class="fc-list">
+              <span class="day-strip-free">
+                <strong>{{ focusInfo.free.length }} of {{ people.length }}</strong> free<template v-if="focusInfo.free.length">:</template>
+                <span v-for="p in focusInfo.free" :key="p.id" class="who">{{ p.emoji }} {{ p.name }}</span>
+              </span>
+              <button type="button" class="ghost icon-only day-strip-close" aria-label="Close day details" @click="focused = null">
+                <AppIcon name="close" />
+              </button>
+            </div>
+            <ul v-if="focusInfo.weather.length" class="day-strip-snow">
               <li v-for="x in focusInfo.weather" :key="x.resort.id" :class="{ fresh: x.w.snowCm >= 5 }">
-                <AppIcon :name="x.w.kind" :size="18" />
+                <AppIcon :name="x.w.kind" :size="16" />
                 <span class="fc-resort">{{ x.resort.name }}</span>
-                <span class="fc-num">{{ x.w.snowCm ? `${x.w.snowCm} cm` : '' }}</span>
-                <span class="fc-num muted">{{ x.w.tMin }}° / {{ x.w.tMax }}°</span>
+                <span class="fc-num">{{ x.w.snowCm ? `${x.w.snowCm} cm` : '–' }}</span>
+                <span class="fc-num muted">{{ x.w.tMin }}°/{{ x.w.tMax }}°</span>
               </li>
             </ul>
             <p v-else class="muted-note">No forecast yet: forecasts reach 16 days ahead.</p>
           </section>
-
-          <CrewPanel
-            :crew="crew"
-            :people="people"
-            :me="me"
-            :busy="busy"
-            @rename="renameCrew"
-            @copy="copyInvite"
-            @reset="resetInvite"
-            @remove="removeMember"
-            @leave="leaveCrew"
-          />
-
-          <section v-if="!focusInfo" class="how">
-            <h2>How it works</h2>
-            <ol>
-              <li>Tap a day in your row, or drag across a stretch, to mark when you're free. Your days are the same in every crew.</li>
-              <li>Copy the invite link and send it to the crew.</li>
-              <li>Look for a check in the Whole crew row when everyone who has marked days is free. <em>Snow windows</em> lists the best stretches.</li>
-              <li>Tap any day for who's free and the snow forecast.</li>
-            </ol>
+          <section v-else-if="people.length < 2" class="solo-band">
+            <img :src="art + 'rufus-snowboard@512.png'" alt="" width="96" height="96" />
+            <div>
+              <h3>Bring the crew</h3>
+              <p>Copy the invite link and send it to the people you ski with. Mark your own free days meanwhile: tap a day in your row, or drag across a stretch.</p>
+            </div>
+            <button type="button" class="primary" @click="copyInvite">Copy invite link</button>
           </section>
-        </aside>
+          <p v-else class="board-hint">
+            Tap or drag across your row to mark free days; they're the same in every crew. Tap any day for who's free and the snow.
+            <em>Snow windows</em> lists the best stretches.
+          </p>
+        </div>
+
       </section>
       <section v-if="tab === 'windows'" id="panel-windows" class="panel split" role="tabpanel" aria-labelledby="tab-windows">
         <BestWindows :counts="counts" :people="marked" :waiting="people.length - marked" @pick="pickWindow" @suggest="suggestFrom" />
@@ -611,6 +606,26 @@ onBeforeUnmount(() => {
       </section>
       </template>
     </main>
+
+    <CrewSheet
+      v-if="session && crew"
+      :open="crewOpen"
+      :crews="crews"
+      :crew="crew"
+      :people="people"
+      :me="me"
+      :guest="session.guest"
+      :busy="busy"
+      @close="crewOpen = false"
+      @select="pickCrew"
+      @create="newCrew"
+      @account="openAccount"
+      @rename="renameCrew"
+      @copy="copyInvite"
+      @reset="resetInvite"
+      @remove="removeMember"
+      @leave="leaveCrew"
+    />
 
     <AccountDialog
       v-if="session"
