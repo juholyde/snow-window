@@ -14,11 +14,11 @@ import { type Day, eachDay, formatDayMonth, formatLong, todayLocal } from './lib
 import { countByDay, markDay, type Person, type TripWindow } from './lib/overlap'
 import { MAX_PEOPLE } from './lib/rules'
 import { type Range, span } from './lib/selection'
-import { type Crew, type CrewPreview, type CrewStore, inviteLink, parseInvite, type Session } from './lib/store'
+import { type Crew, type CrewPreview, type CrewStore, inviteLink, parseInvite, type Session, storeError } from './lib/store'
 import { type Answer, MAX_TRIP_DAYS, type Trip, type TripDraft, type TripStatus } from './lib/trips'
 import { type Forecasts, loadForecasts } from './lib/weather'
 
-const props = defineProps<{ store: CrewStore }>()
+const props = defineProps<{ store: CrewStore; authError?: string | null }>()
 
 const CREW_KEY = 'snow-window:crew'
 const art = import.meta.env.BASE_URL + 'art/'
@@ -273,6 +273,11 @@ async function signIn(email: string) {
   else await start()
 }
 
+async function google(mode: 'save' | 'signin') {
+  // Success leaves the page for Google; only a failure comes back here.
+  await act(() => props.store.google(mode))
+}
+
 async function signOut() {
   if (!(await act(() => props.store.signOut()))) return
   accountOpen.value = false
@@ -394,6 +399,7 @@ onMounted(async () => {
   refreshForecast()
   weatherPoll = setInterval(refreshForecast, 30 * 60_000)
   await start()
+  if (props.authError) say(storeError(props.authError).message, true)
   poll = setInterval(refresh, 30_000)
   document.addEventListener('visibilitychange', onVisible)
   window.addEventListener('hashchange', onHash)
@@ -634,10 +640,12 @@ onBeforeUnmount(() => {
       :session="session"
       :profile="profile"
       :busy="busy"
+      :google="store.kind === 'shared'"
       @close="accountOpen = false"
       @profile="saveProfile"
       @save="saveAccount"
       @sign-in="signIn"
+      @google="google"
       @sign-out="signOut"
     />
 

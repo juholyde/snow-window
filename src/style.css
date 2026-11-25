@@ -537,6 +537,11 @@ body { overflow: hidden; }
 .account-block .muted-note { margin: 0; color: var(--ink-2); line-height: 1.45; }
 .account-email { display: flex; gap: 8px; }
 .account-email input { flex: 1; }
+/* Google's own button colours stay neutral: white face, grey border, their mark. */
+.google-button { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px 14px; border: 1px solid var(--snow-3); border-radius: 10px; background: #fff; color: oklch(0.3 0.02 250); font-weight: 600; }
+.google-button:hover:not(:disabled) { background: oklch(0.97 0.005 250); }
+.or-divider { display: flex; align-items: center; gap: 10px; margin: 2px 0; color: var(--ink-3); font-size: 0.8rem; }
+.or-divider::before, .or-divider::after { content: ''; flex: 1; border-top: 1px solid var(--snow-3); }
 .account-block .link-button { align-self: flex-start; font-size: 14px; }
 .account-block > .primary, .account-block > .ghost { align-self: flex-start; }
 

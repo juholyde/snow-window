@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Day } from './dates'
 import type { Person } from './overlap'
 import { cleanDays, cleanEmoji, cleanName } from './rules'
-import { type Crew, type CrewBoard, type CrewPreview, type CrewStore, cleanCrewName, type Session, storeError } from './store'
+import { type Crew, type CrewBoard, type CrewPreview, type CrewStore, cleanCrewName, ERROR_COPY, type Session, storeError } from './store'
 import { type Answer, cleanDraft, type TripDraft, type TripStatus } from './trips'
 
 const APP = 'snow_window'
@@ -66,6 +66,14 @@ export class SupabaseStore implements CrewStore {
       options: { shouldCreateUser: false, emailRedirectTo: this.redirectTo },
     })
     if (error) throw storeError(error.message)
+  }
+  async google(mode: 'save' | 'signin') {
+    const options = { redirectTo: this.redirectTo }
+    const { error } =
+      mode === 'save'
+        ? await this.client.auth.linkIdentity({ provider: 'google', options })
+        : await this.client.auth.signInWithOAuth({ provider: 'google', options })
+    if (error) throw storeError(error.code && error.code in ERROR_COPY ? error.code : error.message)
   }
   async signOut() {
     const { error } = await this.client.auth.signOut()

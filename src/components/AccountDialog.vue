@@ -6,12 +6,13 @@ import AppIcon from './AppIcon.vue'
 import ProfileFields from './ProfileFields.vue'
 
 /** You: name and avatar, saving a guest account by email, signing in elsewhere, signing out. */
-const props = defineProps<{ open: boolean; session: Session; profile: Person | null; busy: boolean }>()
+const props = defineProps<{ open: boolean; session: Session; profile: Person | null; busy: boolean; google: boolean }>()
 const emit = defineEmits<{
   close: []
   profile: [name: string, emoji: string]
   save: [email: string]
   signIn: [email: string]
+  google: [mode: 'save' | 'signin']
   signOut: []
 }>()
 
@@ -57,7 +58,17 @@ watch(
         <p v-if="mode === 'save'" class="muted-note">
           You're a guest on this device. Add your email to keep your crews if you clear the browser, and to sign in on your phone.
         </p>
-        <p v-else class="muted-note">Already saved an account? We'll email you a sign-in link. This device's guest crews stay behind.</p>
+        <p v-else class="muted-note">Already saved an account? Sign in with it. This device's guest crews stay behind.</p>
+        <button v-if="google" type="button" class="google-button" :disabled="busy" @click="emit('google', mode)">
+          <svg viewBox="0 0 18 18" aria-hidden="true" width="18" height="18">
+            <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z" />
+            <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.33-1.58-5.04-3.7H.96v2.33A9 9 0 0 0 9 18z" />
+            <path fill="#FBBC05" d="M3.96 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3-2.33z" />
+            <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3 2.33C4.67 5.16 6.66 3.58 9 3.58z" />
+          </svg>
+          {{ mode === 'save' ? 'Save with Google' : 'Sign in with Google' }}
+        </button>
+        <p v-if="google" class="or-divider" aria-hidden="true">or with email</p>
         <form class="account-email" @submit.prevent="submitEmail">
           <input v-model="email" type="email" required placeholder="you@example.com" aria-label="Email" autocomplete="email" />
           <button type="submit" class="primary" :disabled="busy || !email.includes('@')">
@@ -70,7 +81,7 @@ watch(
       </template>
       <template v-else>
         <h3 id="account-sync">Signed in</h3>
-        <p class="muted-note">As {{ session.email }}. Sign in with the same email on any device.</p>
+        <p class="muted-note">As {{ session.email }}. Sign in the same way on any device.</p>
         <button type="button" class="ghost" @click="emit('signOut')">Sign out</button>
       </template>
     </section>

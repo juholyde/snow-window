@@ -8,7 +8,7 @@ A **crew** is a named group of friends planning trips together. Everyone signs i
 
 | Question | Decision |
 |---|---|
-| Sign-in | Guest first: an anonymous Supabase account, created on the first visit. A banner offers *Save your account* by email link so the person keeps their crews on other devices |
+| Sign-in | Guest first: an anonymous Supabase account, created on the first visit. *Save your account* with Google or an email link keeps their crews on other devices |
 | Free days | One calendar per person, shared by all their crews |
 | Old public board | Replaced. Its migrations were never pushed, so they are rewritten, not migrated. `LocalStore` demo mode stays for development and tests |
 | Crew admin | The creator renames the crew, resets the invite link and removes members. Anyone can leave. Invite links don't expire |
@@ -20,12 +20,13 @@ A **crew** is a named group of friends planning trips together. Everyone signs i
 1. **First visit, no session.** The client calls `auth.signInAnonymously({ options: { data: { app: 'snow_window' } } })`. The sandbox's `handle_new_user` trigger adds the `snow_window` membership because the app has `join_mode = open` and `allow_anonymous = true`. Then `refreshSession()`, so the JWT carries `apps.snow_window`.
 2. **Profile.** Before creating or joining a crew, the person picks a name and an emoji (stored in `profiles`).
 3. **Save your account.** For a guest, the banner asks for an email: `auth.updateUser({ email }, { emailRedirectTo })`. Supabase emails a confirmation link; after it, the same user id is a permanent account. Nothing is moved.
-4. **Another device.** *Sign in* sends a magic link: `auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo } })`. If that device already had a guest account with crews, those are left behind. Merging guests is out of scope.
+   *Save with Google* calls `auth.linkIdentity({ provider: 'google', options: { redirectTo } })`: the Google identity joins the same user id, so crews stay. If that Google account is already a sandbox user, Supabase returns `identity_already_exists` in the redirect hash; `main.ts` reads it before supabase-js and the app says to use *Sign in with Google* instead.
+4. **Another device.** *Sign in with Google* calls `auth.signInWithOAuth`; `session()` then calls `platform.join_app` if the account isn't in `snow_window` yet. *Sign in* by email sends a magic link: `auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo } })`. If that device already had a guest account with crews, those are left behind. Merging guests is out of scope.
 5. **Sign out** is offered only to saved accounts. A guest who signs out loses the account, so they get a warning first.
 
 Rate limit: the sandbox allows 30 anonymous sign-ins per hour per IP address, which is fine for a group of friends.
 
-**Open (Juho's decision, project-wide):** *Save with Google* needs `enable_manual_linking = true` in the sandbox auth config (`linkIdentity`). That setting applies to every sandbox app. Until it's on, accounts are saved by email only.
+**Decided 2026-11-25 (t15):** guests can save with Google. This needs `enable_manual_linking = true` in the sandbox auth config, which applies to every sandbox app: any signed-in user can attach another login to their own account. Until that config is pushed, *Save with Google* answers `manual_linking_disabled` and the app suggests email.
 
 ## Invite path
 
@@ -59,4 +60,4 @@ If the creator leaves, the crew passes to the longest-standing member. When the 
 
 ## Not in scope
 
-Merging guest accounts; Google/Apple sign-in (see *Open*); per-crew roles beyond creator; invite expiry; email notifications.
+Merging guest accounts; Apple sign-in; per-crew roles beyond creator; invite expiry; email notifications.

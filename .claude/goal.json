@@ -220,14 +220,14 @@
     },
     {
       "id": "t15",
-      "title": "Decide: allow saving a guest account with Google (needs enable_manual_linking for the whole sandbox)",
-      "kind": "clarify",
-      "status": "todo",
+      "title": "Save and sign in with Google (Juho chose yes 2026-11-25; needs enable_manual_linking in the sandbox)",
+      "kind": "build",
+      "status": "doing",
       "importance": 2,
       "size": "S",
       "milestone": "m1",
       "why": "Email-only save works today; Google linking is a project-wide Supabase auth setting that affects every sandbox app.",
-      "doneWhen": "Juho chose yes (setting turned on, Google button added) or no (spec notes email only).",
+      "doneWhen": "A guest on the live site saves with Google and keeps their crews; sandbox config has enable_manual_linking = true.",
       "dependsOn": [
         "t2"
       ]

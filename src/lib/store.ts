@@ -20,6 +20,8 @@ export interface CrewStore {
   saveAccount(email: string): Promise<void>
   /** Sends a sign-in link to an existing account. */
   signIn(email: string): Promise<void>
+  /** Leaves for Google: 'save' links Google to this guest (keeps its crews), 'signin' signs in to an account. */
+  google(mode: 'save' | 'signin'): Promise<void>
   signOut(): Promise<void>
 
   profile(): Promise<Person | null>
@@ -55,6 +57,9 @@ export const ERROR_COPY: Record<string, string> = {
   trips_full: 'This crew already has 40 suggestions.',
   trip_closed: 'That trip was cancelled.',
   not_your_trip: 'Only the person who suggested a trip can change it.',
+  identity_already_exists:
+    "That Google account already has a login here. Use Sign in with Google instead (this device's guest crews stay behind).",
+  manual_linking_disabled: "Saving with Google isn't switched on yet. Save with your email for now.",
 }
 
 export function storeError(message: string): Error {
@@ -123,6 +128,9 @@ export class LocalStore implements CrewStore {
     if (!found) throw new Error('No saved account with that email.')
     this.userId = found[0]
     this.storage.setItem(`${this.key}:me`, found[0])
+  }
+  async google(): Promise<void> {
+    throw new Error('Google sign-in needs the shared board.')
   }
   async signOut() {
     this.storage.removeItem(`${this.key}:me`)
