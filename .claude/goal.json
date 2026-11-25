@@ -46,7 +46,7 @@
       "importance": 5,
       "size": "S",
       "milestone": "m1",
-      "why": "The shared crews need the database. Spec: docs/spec/auth-and-crews.md. APP.md drafted on supabase-sandbox branch app/snow-window (3124799, unsigned, not pushed). Dry run 2026-11-25 against the live sandbox: only 20261125160000_app_snow_window__init.sql would be pushed. Bundle at scratchpad, rebuilt from each app's origin/main (snow-window has no remote: local main 4e9eeac).",
+      "why": "Spec: docs/spec/auth-and-crews.md. Migration 20261125160000 pushed by Juho 2026-11-25 and verified live: remote migration list, platform.apps row (open, anonymous, both redirect URLs), 5 tables all with RLS, 22 functions. Still open: `supabase config push` (exposes app_snow_window, adds redirect URLs to auth) and merging supabase-sandbox branch app/snow-window (3124799, unsigned, not pushed).",
       "doneWhen": "apps/snow_window/APP.md merged in supabase-sandbox (allow_anonymous, join_mode open, no anon-RPC exception any more); Juho pushed 20261125160000_app_snow_window__init.sql and exposed app_snow_window.",
       "dependsOn": [
         "t1"
