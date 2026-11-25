@@ -9,7 +9,22 @@ export type Resort = {
   elevation: number
   /** The resort's own live webcam pages first, then an archive. Checked 2026-11-25. */
   webcams: Webcam[]
+  /** A freely licensed photo from Wikimedia Commons, stored in public/resorts/, credited on the card. */
+  photo: Photo
+  /** Getting there from central Barcelona. Approximate, checked 2026-11-25 (Rome2rio + operator pages). */
+  travel: Travel
 }
+/** 'direct' = one vehicle (maybe a short shuttle at the end); 'change' = at least one change. */
+export type Leg = { minutes: number; kind: 'direct' | 'change'; route: string } | null
+export type Travel = { car: { km: number; minutes: number; route: string }; bus: Leg; train: Leg; note?: string }
+export type Photo = { file: string; author: string; license: string; source: string }
+
+const commons = (file: string, author: string, license: string, page: string): Photo => ({
+  file: `resorts/${file}`,
+  author,
+  license,
+  source: `https://commons.wikimedia.org/wiki/File:${page}`,
+})
 
 const archive = (slug: string): Webcam => ({
   label: 'Webcam archive',
@@ -24,6 +39,8 @@ export const RESORTS: Resort[] = [
     lat: 42.7,
     lon: 0.93,
     elevation: 2000,
+    photo: commons('baqueira.jpg', 'Cantabrucu', 'CC0', 'Baqueira-Beret_16.jpg'),
+    travel: { car: { km: 320, minutes: 230, route: 'Via Lleida and the Vielha tunnel' }, bus: { minutes: 345, kind: 'change', route: 'Alsa to Vielha, then the Baqueira bus' }, train: { minutes: 350, kind: 'change', route: 'Train to Lleida, then Alsa bus to Vielha' } },
     webcams: [{ label: 'Live webcams', url: 'https://www.baqueira.es/es/webcams' }, archive('baqueira-beret')],
   },
   {
@@ -33,6 +50,8 @@ export const RESORTS: Resort[] = [
     lat: 42.33,
     lon: 1.94,
     elevation: 1900,
+    photo: commons('la-molina.jpg', 'Antonio De Lorenzo', 'CC BY 2.5', 'Molina_La2.JPG'),
+    travel: { car: { km: 150, minutes: 110, route: 'C-16 through the Cadí tunnel' }, bus: { minutes: 140, kind: 'direct', route: 'Sagalés SkiBus from Sants, on set days' }, train: { minutes: 180, kind: 'direct', route: 'Rodalies R3 to La Molina, free shuttle to the slopes (rail works with replacement buses until 2028)' } },
     webcams: [
       { label: 'La Molina webcams', url: 'https://pirineu365.cat/es/lamolina/en-directo/webcams/' },
       { label: 'Masella webcams', url: 'https://www.masella.com/ca/webcam' },
@@ -46,6 +65,8 @@ export const RESORTS: Resort[] = [
     lat: 42.54,
     lon: 1.73,
     elevation: 2200,
+    photo: commons('grandvalira.jpg', 'Carlos Delgado', 'CC BY-SA 3.0', 'Pas_de_la_Casa-Hivern.jpg'),
+    travel: { car: { km: 190, minutes: 160, route: 'C-16 and Puigcerdà, or via La Seu d\'Urgell' }, bus: { minutes: 210, kind: 'direct', route: 'Andbus Barcelona–Soldeu' }, train: null },
     webcams: [
       { label: 'Live webcams', url: 'https://www.grandvalira.com/es/estacion/webcams' },
       archive('grandvalira-pas-de-la-casa-grau-roig-soldeu-el-tarter-canillo-encamp'),
@@ -58,6 +79,8 @@ export const RESORTS: Resort[] = [
     lat: 42.56,
     lon: 1.48,
     elevation: 2000,
+    photo: commons('pal-arinsal.jpg', 'Pal Arinsal / Martin Imatge', 'CC BY-SA 4.0', '2020_01_24_Copa_del_M%C3%B3n_Esqui_Muntanya_(Martin_Imatge)-0942.jpg'),
+    travel: { car: { km: 200, minutes: 160, route: 'C-14 via La Seu d\'Urgell' }, bus: { minutes: 210, kind: 'change', route: 'Bus to Andorra la Vella, then line L5 (Pal) or L6 (Arinsal)' }, train: null },
     webcams: [
       { label: 'Live webcams', url: 'https://www.palarinsal.com/es/estacion/webcams' },
       archive('pal-arinsal-la-massana'),
@@ -70,6 +93,8 @@ export const RESORTS: Resort[] = [
     lat: 42.78,
     lon: -0.36,
     elevation: 1900,
+    photo: commons('formigal.jpg', 'Willtron', 'CC BY-SA 3.0', 'Vista_de_la_estaci%C3%B3n_de_esqu%C3%AD_de_Formigal_desde_la_pista_del_Collado.jpg'),
+    travel: { car: { km: 400, minutes: 255, route: 'Via Lleida, Huesca and Sabiñánigo' }, bus: { minutes: 440, kind: 'change', route: 'Avanza via Huesca' }, train: { minutes: 360, kind: 'change', route: 'AVE to Zaragoza, then Avanza bus' } },
     webcams: [
       { label: 'Live webcams', url: 'https://www.aramon.com/formigal-panticosa/webcam-formigal-panticosa.html' },
       archive('formigal'),
@@ -82,6 +107,8 @@ export const RESORTS: Resort[] = [
     lat: 42.56,
     lon: 0.55,
     elevation: 2000,
+    photo: commons('cerler.jpg', 'total 13', 'CC BY 2.0', 'Cerler,_telesilla.jpg'),
+    travel: { car: { km: 300, minutes: 230, route: 'Via Lleida, Barbastro and Benasque' }, bus: { minutes: 385, kind: 'change', route: 'Via Barbastro and Benasque; few buses a day' }, train: { minutes: 360, kind: 'change', route: 'Train to Lleida, then bus to Benasque' } },
     webcams: [{ label: 'Live webcams', url: 'https://www.aramon.com/cerler/webcam-cerler.html' }, archive('cerler')],
   },
   {
@@ -91,6 +118,8 @@ export const RESORTS: Resort[] = [
     lat: 37.09,
     lon: -3.39,
     elevation: 2500,
+    photo: commons('sierra-nevada.jpg', 'Emilio J. Rodríguez Posada', 'CC BY-SA 3.0', 'Sierra_Nevada_Espa%C3%B1a_(Spain)_10.JPG'),
+    travel: { car: { km: 860, minutes: 525, route: 'Along the coast to Granada, then A-395' }, bus: { minutes: 890, kind: 'change', route: 'Overnight Alsa to Granada, then the Sierra Nevada bus' }, train: { minutes: 450, kind: 'change', route: 'AVE to Granada, then the Sierra Nevada bus' }, note: 'Fastest: fly to Granada (1h35) and take the bus up' },
     webcams: [
       { label: 'Live webcams', url: 'https://sierranevada.es/en/invierno/the-station/live/webcams/' },
       archive('sierra-nevada-pradollano'),

@@ -16,6 +16,9 @@ export type IconName =
   | 'calendar'
   | 'mountain'
   | 'board'
+  | 'car'
+  | 'bus'
+  | 'train'
 
 withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 18 })
 </script>
@@ -75,6 +78,24 @@ withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 18 })
     <g v-else-if="name === 'board'">
       <rect x="3.5" y="5" width="17" height="14" rx="2" />
       <path d="M3.5 10h17M9 10v9" />
+    </g>
+    <g v-else-if="name === 'car'">
+      <path d="M5 16.5V12l1.8-4.6A1.5 1.5 0 0 1 8.2 6.5h7.6a1.5 1.5 0 0 1 1.4.9L19 12v4.5z" />
+      <path d="M5 12h14M6.5 16.5v2M17.5 16.5v2" />
+      <circle cx="8.5" cy="14" r="0.6" fill="currentColor" />
+      <circle cx="15.5" cy="14" r="0.6" fill="currentColor" />
+    </g>
+    <g v-else-if="name === 'bus'">
+      <rect x="5" y="3.5" width="14" height="14" rx="2.5" />
+      <path d="M5 11h14M7.5 17.5v2.5M16.5 17.5v2.5M9 7h6" />
+      <circle cx="8.5" cy="14.3" r="0.6" fill="currentColor" />
+      <circle cx="15.5" cy="14.3" r="0.6" fill="currentColor" />
+    </g>
+    <g v-else-if="name === 'train'">
+      <rect x="6" y="3.5" width="12" height="13" rx="3" />
+      <path d="M6 10h12M9 20.5l1.5-4M15 20.5l-1.5-4" />
+      <circle cx="9.5" cy="13.3" r="0.6" fill="currentColor" />
+      <circle cx="14.5" cy="13.3" r="0.6" fill="currentColor" />
     </g>
     <g v-else-if="name === 'storm'">
       <path d="M7 14.5h10.5a3.5 3.5 0 0 0 .3-7 5 5 0 0 0-9.6 1.4A2.8 2.8 0 0 0 7 14.5z" />

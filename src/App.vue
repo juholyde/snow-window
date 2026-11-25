@@ -11,8 +11,9 @@ import { RESORTS } from './config/resorts'
 import { type Forecasts, loadForecasts } from './lib/weather'
 import AppIcon from './components/AppIcon.vue'
 import ResortsTab from './components/ResortsTab.vue'
-import TripsTab from './components/TripsTab.vue'
-import type { Answer, Trip, TripDraft, TripStatus } from './lib/trips'
+import TripsTab, { type TripsView } from './components/TripsTab.vue'
+import { type Answer, MAX_TRIP_DAYS, type Trip, type TripDraft, type TripStatus } from './lib/trips'
+import { type Range, span } from './lib/selection'
 import { type BoardStore, claimLink, parseClaim, TokenKeeper } from './lib/store'
 
 const props = defineProps<{ store: BoardStore }>()
@@ -150,13 +151,15 @@ function pickWindow(w: TripWindow) {
 }
 
 const mine = computed(() => people.value.filter((p) => editable.value.has(p.id)))
-const composing = ref(false)
-const prefill = ref<{ start: Day; end: Day } | null>(null)
 const openTrips = computed(() => trips.value.filter((t) => t.status !== 'cancelled').length)
+// Trips opens on Answer when there is something to answer, otherwise on Suggest.
+const tripsPicked = ref<TripsView | null>(null)
+const tripsView = computed<TripsView>(() => tripsPicked.value ?? (openTrips.value ? 'answer' : 'suggest'))
+const tripRange = ref<Range | null>(null)
 
 function suggestFrom(w: TripWindow) {
-  prefill.value = { start: w.start, end: w.end }
-  composing.value = true
+  tripRange.value = span(w.start, w.end, MAX_TRIP_DAYS)
+  tripsPicked.value = 'suggest'
   tab.value = 'trips'
 }
 
@@ -180,8 +183,8 @@ async function tripAction(run: (token: string) => Promise<unknown>, personId: st
 async function createTrip(personId: string, draft: TripDraft) {
   const done = await tripAction((t) => props.store.createTrip(personId, t, draft), personId, 'Suggested. The group can answer now.')
   if (done) {
-    composing.value = false
-    prefill.value = null
+    tripRange.value = null
+    tripsPicked.value = 'answer'
   }
 }
 const respond = (tripId: string, personId: string, answer: Answer) =>
@@ -389,20 +392,23 @@ onBeforeUnmount(() => {
 
       <section v-if="tab === 'trips'" id="panel-trips" class="panel" role="tabpanel" aria-labelledby="tab-trips">
         <TripsTab
+          :view="tripsView"
           :trips="trips"
+          :days="days"
           :people="people"
+          :editable="editable"
           :mine="mine"
           :counts="counts"
           :forecasts="forecasts"
           :resort-id="resortId"
-          :prefill="prefill"
-          :composing="composing"
+          :range="tripRange"
           :busy="busy"
+          @view="(v) => (tripsPicked = v)"
+          @range="(r) => (tripRange = r)"
           @create="createTrip"
           @respond="respond"
           @status="setStatus"
           @show="(r) => showOnBoard(r.start, r)"
-          @compose="(open) => { composing = open; if (!open) prefill = null }"
         />
       </section>
 

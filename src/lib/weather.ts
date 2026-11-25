@@ -1,4 +1,7 @@
-import type { Resort } from '../config/resorts'
+import type { Resort as FullResort } from '../config/resorts'
+
+/** Weather needs only where a resort is. */
+type Resort = Pick<FullResort, 'id' | 'name' | 'lat' | 'lon' | 'elevation'>
 import type { Day } from './dates'
 
 /**

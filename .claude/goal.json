@@ -161,9 +161,51 @@
       "dependsOn": [
         "t4"
       ]
+    },
+    {
+      "id": "t11",
+      "title": "Trips split into Suggest (pick dates on the timeline) and Answer (cards with big answer buttons)",
+      "kind": "build",
+      "status": "done",
+      "importance": 4,
+      "size": "M",
+      "milestone": "m2",
+      "why": "Juho: separate suggesting from accepting; a timeline for suggesting; the first Trips UI was hard to use.",
+      "doneWhen": "Timeline pick mode (tap first and last day, mouse drag), TripForm beside it, Answer view with resort photos; verified desktop + mobile (2026-11-25).",
+      "dependsOn": [
+        "t10"
+      ]
+    },
+    {
+      "id": "t12",
+      "title": "Resort photos (Wikimedia Commons, credited) and travel from Barcelona by car, bus, train",
+      "kind": "build",
+      "status": "done",
+      "importance": 3,
+      "size": "S",
+      "milestone": "m1",
+      "why": "Juho: show the resorts, and how far and how to get there.",
+      "doneWhen": "7 photos in public/resorts with author + licence; travel times in resorts.ts, approximate (Rome2rio, 2026-11-25).",
+      "dependsOn": [
+        "t9"
+      ]
+    },
+    {
+      "id": "t13",
+      "title": "Check Barcelona travel times against official winter 2026-27 timetables (Alsa, Avanza, Sagalés, Rodalies R3)",
+      "kind": "research",
+      "status": "todo",
+      "importance": 2,
+      "size": "S",
+      "milestone": "m1",
+      "why": "Current figures come from Rome2rio; alsa.com and baqueira.es refuse automated fetches, so a person checks them in a browser.",
+      "doneWhen": "Each bus/train leg in resorts.ts matches a published 2026-27 timetable, or is marked seasonal.",
+      "dependsOn": [
+        "t12"
+      ]
     }
   ],
-  "next": "t11",
+  "next": "t14",
   "questions": [
     {
       "question": "Season range",

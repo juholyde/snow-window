@@ -11,8 +11,8 @@ One screen, four tabs: **Board** (timeline + details), **Snow windows** (best st
 - **Whole crew row**: how many are free each day; a green ✓ when everyone who has marked days is free.
 - **Snow windows**: the longest stretches when everyone is free (or, failing that, the most people), with nights, weekend days and holidays inside.
 - **Snow forecast row**: pick a resort (Baqueira, La Molina, Grandvalira, Pal Arinsal, Formigal, Cerler, Sierra Nevada); each day within 16 days shows the sky, snowfall and max temperature from [Open-Meteo](https://open-meteo.com/). Days with 5 cm or more of fresh snow light up orange. Tapping a day lists every resort.
-- **Trips tab**: anyone with a row suggests a day trip or a stay of up to 14 days at one of the resorts, from a snow window or any dates. A stay can carry a link, a price per person per night and a note. Everyone answers Going / Maybe / Can't as their own row; the card shows the tally and who is free for all of it. The proposer marks it *on*, reopens or cancels it. At most 40 trips.
-- **Resorts tab**: the seven resorts sorted by snow in the next week, each with its own live-webcam page and a webcam archive (links in `src/config/resorts.ts`, checked 2026-11-25).
+- **Trips tab**, two views. *Suggest*: the same timeline as the Board; tap the first day, then the last (one tap is a day trip; a mouse can drag), pick a resort (its forecast shows on the timeline), add a plan and, when staying over, a place: link, € per person per night, note. *Answer*: every trip as a card with the resort's photo, Going / Maybe / Can't per row you own, the tally and who's free for all of it. The proposer marks it *on*, reopens or cancels it. Up to 14 days per trip, 40 trips.
+- **Resorts tab**: the seven resorts sorted by snow in the next week, each with a photo, travel from Barcelona by car, bus and train (time, km, direct or with a change; the route on hover), its own live-webcam page and a webcam archive. All in `src/config/resorts.ts`, checked 2026-11-25. Travel times are approximate (Rome2rio and operator pages; Alsa's site couldn't be checked, and the R3 line has replacement buses until 2028).
 - **No sign-in.** Adding a row gives this device an edit token. ⋯ → *Copy edit link* opens your row on another device.
 
 ## Develop
@@ -33,7 +33,7 @@ Schema `app_snow_window` in the shared Supabase sandbox (`~/projects/supabase-sa
 
 ## Look
 
-Palette, type and icons are documented at the top of `src/style.css` (OKLCH tokens: snow, glacier ink, one orange accent; no gradients). Illustrations are briefed for Codex in `docs/handoff/codex-images.md`.
+Palette, type and icons are documented at the top of `src/style.css` (OKLCH tokens: snow, glacier ink, one orange accent; no gradients). Illustrations are briefed for Codex in `docs/handoff/codex-images.md`. Resort photos in `public/resorts/` come from Wikimedia Commons under free licences; each card credits its author and licence and links the source page.
 
 ## Calendar
 

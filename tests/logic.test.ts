@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { countByDay, findWindows, markDay, type Person } from '../src/lib/overlap'
 import { cleanDays } from '../src/lib/rules'
-import { modeFor, paint } from '../src/lib/selection'
+import { modeFor, paint, span, tapRange } from '../src/lib/selection'
 import { claimLink, LocalStore, parseClaim } from '../src/lib/store'
 
 const person = (name: string, days: string[]): Person => ({ id: name, name, emoji: '🏂', days })
@@ -73,4 +73,15 @@ it('round-trips a claim link', () => {
   const link = claimLink('https://x.test/snow-window/#old', id, token)
   expect(parseClaim(new URL(link).hash)).toEqual({ id, token })
   expect(parseClaim('#claim=nope')).toBeNull()
+})
+
+it('picks trip dates by tapping a first and a last day, capped at the trip limit', () => {
+  const one = tapRange(null, '2027-01-10', 14)
+  expect(one).toEqual({ start: '2027-01-10', end: '2027-01-10' })
+  expect(tapRange(one, '2027-01-12', 14)).toEqual({ start: '2027-01-10', end: '2027-01-12' })
+  // A tap before the start, or after a finished range, starts over.
+  expect(tapRange(one, '2027-01-08', 14)).toEqual({ start: '2027-01-08', end: '2027-01-08' })
+  expect(tapRange({ start: '2027-01-10', end: '2027-01-12' }, '2027-01-20', 14).end).toBe('2027-01-20')
+  expect(tapRange(one, '2027-03-01', 14)).toEqual({ start: '2027-01-10', end: '2027-01-23' })
+  expect(span('2027-01-05', '2027-01-02', 14)).toEqual({ start: '2027-01-02', end: '2027-01-05' })
 })

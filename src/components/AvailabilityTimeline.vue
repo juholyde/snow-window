@@ -2,7 +2,8 @@
 import { computed, ref } from 'vue'
 import { type Day, formatMonth, todayLocal } from '../lib/dates'
 import { type DayMark, markDay, type Person } from '../lib/overlap'
-import { modeFor, type PaintMode, paint } from '../lib/selection'
+import { modeFor, type PaintMode, paint, type Range, span, tapRange } from '../lib/selection'
+import { MAX_TRIP_DAYS } from '../lib/trips'
 import { RESORTS } from '../config/resorts'
 import type { DayWeather } from '../lib/weather'
 import AppIcon from './AppIcon.vue'
@@ -16,6 +17,8 @@ const props = defineProps<{
   highlight: { start: Day; end: Day } | null
   resortId: string
   forecast: Record<Day, DayWeather> | null
+  /** 'pick' turns taps and drags into picking a date range (trip suggestions) instead of marking days. */
+  mode?: 'paint' | 'pick'
 }>()
 
 const emit = defineEmits<{
@@ -23,7 +26,12 @@ const emit = defineEmits<{
   focus: [day: Day]
   manage: [id: string]
   resort: [id: string]
+  pick: [range: Range]
 }>()
+const picking = computed(() => props.mode === 'pick')
+const focus = (d: Day) => {
+  if (!picking.value) emit('focus', d)
+}
 
 const today = todayLocal()
 const marks = computed(() => new Map(props.days.map((d) => [d, markDay(d)] as const)))
@@ -52,7 +60,7 @@ function columnClass(d: Day) {
     keydate: Boolean(m.keyDate),
     today: d === today,
     focused: d === props.focused,
-    lit: props.highlight !== null && d >= props.highlight.start && d <= props.highlight.end,
+    lit: lit.value !== null && d >= lit.value.start && d <= lit.value.end,
   }
 }
 
@@ -79,14 +87,47 @@ function dayAt(e: PointerEvent): Day | null {
   return (el?.dataset.day as Day | undefined) ?? null
 }
 
+// Picking: a mouse drags a range; a finger taps the first day, then the last (so swiping still scrolls).
+type Pick = { anchor: Day; current: Day; pointer: number; touch: boolean }
+const pickDrag = ref<Pick | null>(null)
+const lit = computed<Range | null>(() => {
+  const p = pickDrag.value
+  return p && !p.touch && p.anchor !== p.current ? span(p.anchor, p.current, MAX_TRIP_DAYS) : props.highlight
+})
+
+function onPickDown(e: PointerEvent) {
+  if (!picking.value || e.button !== 0) return
+  const day = dayAt(e)
+  if (!day) return
+  const touch = e.pointerType === 'touch'
+  if (!touch) e.preventDefault()
+  pickDrag.value = { anchor: day, current: day, pointer: e.pointerId, touch }
+}
+
+function onPickUp(e: PointerEvent) {
+  const p = pickDrag.value
+  if (!p || e.pointerId !== p.pointer) return
+  pickDrag.value = null
+  if (e.type === 'pointercancel') return
+  const day = dayAt(e)
+  if (p.touch || p.anchor === p.current) {
+    if (day === p.anchor) emit('pick', tapRange(props.highlight, day, MAX_TRIP_DAYS))
+  } else emit('pick', span(p.anchor, p.current, MAX_TRIP_DAYS))
+}
+
 function onDown(e: PointerEvent, p: Person, d: Day) {
-  if (!props.editable.has(p.id) || e.button !== 0) return
+  if (picking.value || !props.editable.has(p.id) || e.button !== 0) return
   e.preventDefault()
   ;(e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId)
   drag.value = { id: p.id, anchor: d, current: d, mode: modeFor(p.days, d), pointer: e.pointerId }
 }
 
 function onMove(e: PointerEvent) {
+  const p = pickDrag.value
+  if (p && !p.touch && e.pointerId === p.pointer) {
+    const day = dayAt(e)
+    if (day) p.current = day
+  }
   const d = drag.value
   if (!d || e.pointerId !== d.pointer) return
   const day = dayAt(e)
@@ -94,6 +135,7 @@ function onMove(e: PointerEvent) {
 }
 
 function onUp(e: PointerEvent) {
+  onPickUp(e)
   const d = drag.value
   if (!d || e.pointerId !== d.pointer) return
   drag.value = null
@@ -119,7 +161,9 @@ defineExpose({ scrollToDay })
   <div
     ref="scroller"
     class="timeline"
+    :class="{ picking }"
     :style="{ '--cols': days.length }"
+    @pointerdown="onPickDown"
     @pointermove="onMove"
     @pointerup="onUp"
     @pointercancel="onUp"
@@ -135,7 +179,7 @@ defineExpose({ scrollToDay })
 
       <!-- Days -->
       <div class="name head corner corner-low">
-        <span class="hint">Tap a day for details</span>
+        <span class="hint">{{ picking ? 'Tap first day, then last' : 'Tap a day for details' }}</span>
       </div>
       <div class="head-days">
         <button
@@ -146,7 +190,7 @@ defineExpose({ scrollToDay })
           :class="columnClass(d)"
           :data-day="d"
           :title="[markOf(d).holiday, markOf(d).keyDate].filter(Boolean).join(' · ') || undefined"
-          @click="emit('focus', d)"
+          @click="focus(d)"
         >
           <span class="letter">{{ letter(d) }}</span>
           <span class="num">{{ dayNum(d) }}</span>
@@ -172,7 +216,7 @@ defineExpose({ scrollToDay })
           :class="[columnClass(d), heat(d)]"
           :data-day="d"
           :aria-label="`${d}: ${counts.get(d) ?? 0} of ${total} free`"
-          @click="emit('focus', d)"
+          @click="focus(d)"
         >
           <AppIcon v-if="heat(d) === 'all'" name="check" :size="16" />
           <span v-else-if="counts.get(d)">{{ counts.get(d) }}</span>
@@ -197,7 +241,7 @@ defineExpose({ scrollToDay })
           :class="[columnClass(d), { fresh: (forecast?.[d]?.snowCm ?? 0) >= 5, none: !forecast?.[d] }]"
           :data-day="d"
           :aria-label="forecast?.[d] ? `${d}: ${forecast[d].kind}, ${forecast[d].snowCm} cm snow, ${forecast[d].tMin} to ${forecast[d].tMax} °C` : `${d}: no forecast yet`"
-          @click="emit('focus', d)"
+          @click="focus(d)"
         >
           <template v-if="forecast?.[d]">
             <AppIcon :name="forecast[d].kind" :size="16" />

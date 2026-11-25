@@ -84,39 +84,3 @@ export function sortTrips(trips: readonly Trip[]): Trip[] {
   const rank: Record<TripStatus, number> = { on: 0, open: 1, cancelled: 2 }
   return [...trips].sort((a, b) => rank[a.status] - rank[b.status] || b.createdAt.localeCompare(a.createdAt))
 }
-
-export type DatePick = { start: Day; end: Day; people: number }
-
-/**
- * Quick picks for the composer: single days with the most people free (day trips),
- * or stretches of 2+ days, trimmed to the trip limit (multi-day). Best first.
- */
-export function datePicks(kind: 'day' | 'multi', counts: Map<Day, number>, limit = 8): DatePick[] {
-  const days = eachDay(SEASON.start, SEASON.end)
-  if (kind === 'day') {
-    return days
-      .filter((d) => (counts.get(d) ?? 0) >= 2)
-      .map((d) => ({ start: d, end: d, people: counts.get(d) ?? 0 }))
-      .sort((a, b) => b.people - a.people || a.start.localeCompare(b.start))
-      .slice(0, limit)
-  }
-  const picks: DatePick[] = []
-  const most = Math.max(0, ...counts.values())
-  for (let need = most; need >= 2 && picks.length < limit; need--) {
-    let run: Day[] = []
-    const flush = () => {
-      const start = run[0]
-      if (run.length >= 2 && start && !picks.some((p) => p.start <= start && p.end >= start)) {
-        const end = run[Math.min(run.length, MAX_TRIP_DAYS) - 1] as Day
-        picks.push({ start, end, people: need })
-      }
-      run = []
-    }
-    for (const d of days) {
-      if ((counts.get(d) ?? 0) >= need) run.push(d)
-      else flush()
-    }
-    flush()
-  }
-  return picks.slice(0, limit)
-}

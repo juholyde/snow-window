@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Person } from '../src/lib/overlap'
 import { LocalStore } from '../src/lib/store'
-import { cleanDraft, coverage, datePicks, sortTrips, type Trip, type TripDraft, tally } from '../src/lib/trips'
+import { cleanDraft, coverage, sortTrips, type Trip, type TripDraft, tally } from '../src/lib/trips'
 
 const person = (id: string, days: string[]): Person => ({ id, name: id, emoji: '🏂', days })
 const draft = (over: Partial<TripDraft> = {}): TripDraft => ({
@@ -69,18 +69,4 @@ describe('LocalStore trips', () => {
     await store.removePerson(me.person.id, me.token)
     expect(await store.loadTrips()).toEqual([])
   })
-})
-
-it('offers the best single days and stretches as quick picks', () => {
-  const counts = new Map([
-    ['2027-01-02', 3], ['2027-01-03', 3], ['2027-01-04', 2], ['2027-02-10', 2], ['2027-02-11', 2], ['2027-03-01', 1],
-  ])
-  expect(datePicks('day', counts, 2)).toEqual([
-    { start: '2027-01-02', end: '2027-01-02', people: 3 },
-    { start: '2027-01-03', end: '2027-01-03', people: 3 },
-  ])
-  expect(datePicks('multi', counts)).toEqual([
-    { start: '2027-01-02', end: '2027-01-03', people: 3 },
-    { start: '2027-02-10', end: '2027-02-11', people: 2 },
-  ])
 })
