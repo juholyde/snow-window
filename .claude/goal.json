@@ -1,0 +1,22 @@
+{
+  "goal": "Get a group of friends from 'we should go skiing' to a booked trip: everyone marks when they're free, the board shows the overlap, and someone turns it into a trip the group agrees on.",
+  "success": "A real group plans at least one 2026-27 ski trip through it: rows filled, a suggestion made from a snow window, and accepted by the group.",
+  "milestones": [
+    { "id": "m1", "title": "Availability board live", "done": false, "keywords": ["timeline", "availability", "rows", "deploy"] },
+    { "id": "m2", "title": "Trip suggestions with accept / tentative / decline", "done": false, "keywords": ["suggestion", "vote", "accommodation", "day trip"] }
+  ],
+  "tasks": [
+    { "id": "t1", "title": "Build the availability timeline with rows, emoji, holidays and snow windows", "kind": "build", "status": "done", "importance": 5, "size": "M", "milestone": "m1", "why": "The core of the idea.", "doneWhen": "Board works in demo mode; migration tested on PGlite (2026-11-25).", "dependsOn": [] },
+    { "id": "t2", "title": "Register snow_window in the Supabase sandbox (APP.md, anon-RPC exception) and push the migration", "kind": "build", "status": "todo", "importance": 5, "size": "S", "milestone": "m1", "why": "The shared board needs the database; the sandbox needs to document the first no-sign-in app.", "doneWhen": "apps/snow_window/APP.md merged in supabase-sandbox with the no-auth exception under Documented exceptions; Juho pushed the migration and added app_snow_window to exposed schemas.", "dependsOn": ["t1"] },
+    { "id": "t3", "title": "Create the GitHub repo, set Pages + secrets, deploy", "kind": "build", "status": "todo", "importance": 5, "size": "S", "milestone": "m1", "why": "Public URL to share with the group.", "doneWhen": "https://juholyde.github.io/snow-window/ loads the shared board.", "dependsOn": ["t2"] },
+    { "id": "t4", "title": "Clarify trip suggestions: fields, day trip vs multi-day, accommodation, who decides", "kind": "clarify", "status": "todo", "importance": 4, "size": "S", "milestone": "m2", "why": "Section 2 of the idea; Juho wanted to look at it after the board.", "doneWhen": "Answers logged in questions; build tasks filed under m2.", "dependsOn": ["t1"] },
+    { "id": "t5", "title": "Decide: what stops a stranger from vandalising rows (only 20 places, no sign-in)", "kind": "clarify", "status": "todo", "importance": 3, "size": "S", "milestone": "m1", "why": "Anyone with the link can fill all 20 places; tokens protect existing rows but not the slots.", "doneWhen": "Juho picked: keep as is, add a shared group passcode, or sign-in.", "dependsOn": [] }
+  ],
+  "next": "t6",
+  "questions": [
+    { "question": "Season range", "answer": "Dec 2026 – Apr 2027", "topic": "scope", "at": "2026-11-25" },
+    { "question": "Which holidays", "answer": "National + Catalonia", "topic": "scope", "at": "2026-11-25" },
+    { "question": "Select dates to highlight", "answer": "The Scopely winter break from the wiki (Dec 28–31)", "topic": "scope", "at": "2026-11-25" }
+  ],
+  "sideQuests": []
+}

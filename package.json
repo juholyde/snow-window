@@ -1,0 +1,28 @@
+{
+  "name": "snow-window",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "vue-tsc -b",
+    "lint": "biome lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.2",
+    "vue": "^3.5.46"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.9",
+    "@electric-sql/pglite": "^0.6.0",
+    "@types/node": "^26.6.10",
+    "@vitejs/plugin-vue": "^6.0.11",
+    "typescript": "~5.9",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.2",
+    "vue-tsc": "^3.3.14"
+  }
+}
