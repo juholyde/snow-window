@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import AddPerson from './components/AddPerson.vue'
 import BestWindows from './components/BestWindows.vue'
 import AvailabilityTimeline from './components/AvailabilityTimeline.vue'
@@ -10,6 +10,7 @@ import { MAX_PEOPLE } from './lib/rules'
 import { RESORTS } from './config/resorts'
 import { type Forecasts, loadForecasts } from './lib/weather'
 import AppIcon from './components/AppIcon.vue'
+import ResortsTab from './components/ResortsTab.vue'
 import { type BoardStore, claimLink, parseClaim, TokenKeeper } from './lib/store'
 
 const props = defineProps<{ store: BoardStore }>()
@@ -48,7 +49,6 @@ const editable = computed(() => {
 })
 const counts = computed(() => countByDay(people.value))
 const marked = computed(() => people.value.filter((p) => p.days.length).length)
-const hasRow = computed(() => editable.value.size > 0)
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 function say(text: string, error = false) {
@@ -122,10 +122,41 @@ async function remove(p: Person) {
   }
 }
 
+type Tab = 'board' | 'windows' | 'resorts'
+const TABS: { id: Tab; label: string; short: string; icon: 'board' | 'calendar' | 'mountain' }[] = [
+  { id: 'board', label: 'Board', short: 'Board', icon: 'board' },
+  { id: 'windows', label: 'Snow windows', short: 'Windows', icon: 'calendar' },
+  { id: 'resorts', label: 'Resorts', short: 'Resorts', icon: 'mountain' },
+]
+const tab = ref<Tab>('board')
+
+/** Jump to a day on the board, from any tab. */
+async function showOnBoard(day: Day, range?: { start: Day; end: Day }) {
+  tab.value = 'board'
+  highlight.value = range ?? null
+  focused.value = day
+  await nextTick()
+  timeline.value?.scrollToDay(day)
+}
+
 function pickWindow(w: TripWindow) {
-  highlight.value = { start: w.start, end: w.end }
-  focused.value = w.start
-  timeline.value?.scrollToDay(w.start)
+  showOnBoard(w.start, { start: w.start, end: w.end })
+}
+
+function useResort(id: string) {
+  pickResort(id)
+  tab.value = 'board'
+}
+
+async function onTabKey(e: KeyboardEvent) {
+  const i = TABS.findIndex((t) => t.id === tab.value)
+  const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+  if (!step) return
+  const next = TABS[(i + step + TABS.length) % TABS.length]
+  if (!next) return
+  tab.value = next.id
+  await nextTick()
+  document.getElementById(`tab-${next.id}`)?.focus()
 }
 
 const focusInfo = computed(() => {
@@ -175,116 +206,146 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <header class="hero">
-    <div class="hero-inner">
-      <h1>Snow Window</h1>
-      <p class="lede">
-        Add yourself, mark the days you could ski or ride this season, and see when the whole crew is free.
-        <span class="where">Pyrenees · Andorra · Sierra Nevada · Dec 2026 – Apr 2027</span>
-      </p>
-    </div>
-    <svg class="range" viewBox="0 0 1440 260" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-      <circle class="sun" cx="1130" cy="86" r="46" />
-      <path class="far" d="M0 260V150l120-52 90 38 150-96 110 70 80-34 140 88 120-74 110 44 170-112 120 82 90-30 140 70V260Z" />
-      <path class="far-snow" d="M332 58L360 40l28 18-14-4-12 8-14-9zM1057 44l33-22 32 22-16-4-14 10-16-9z" />
-      <path class="near" d="M0 260V196l160-70 140 64 120-44 160 82 140-58 170 54 130-80 190 72 130-30V260Z" />
-      <path class="near-snow" d="M123 142l37-16 35 16-17-3-16 8-20-8zM994 160l26-16 42 16-18-4-18 8-18-8z" />
-      <path class="ground" d="M0 260v-26c240-20 480-24 720-14s480 12 720-6v46Z" />
-    </svg>
-  </header>
-
-  <main>
-    <p v-if="store.kind === 'local'" class="demo">
-      Demo mode: this board is saved in this browser only.
-    </p>
-
-    <div class="legend">
-      <span><i class="sw sw-weekend" /> Weekend</span>
-      <span><i class="sw sw-holiday" /> Holiday (Spain, Catalonia)</span>
-      <span v-for="k in KEY_DATES" :key="k.name">
-        <i class="sw sw-key" /> {{ k.name }} · {{ formatDayMonth(k.start) }}–{{ formatDayMonth(k.end) }}
-      </span>
-      <span><i class="sw sw-free" /> Free</span>
-      <span><i class="sw sw-fresh" /> Fresh snow ≥ 5 cm</span>
-      <span><i class="sw sw-all" /> Everyone free</span>
-    </div>
-
-    <section class="board" aria-label="Availability timeline">
-      <AvailabilityTimeline
-        ref="timeline"
-        :days="days"
-        :people="people"
-        :editable="editable"
-        :counts="counts"
-        :focused="focused"
-        :highlight="highlight"
-        :resort-id="resortId"
-        :forecast="forecasts?.[resortId] ?? null"
-        @resort="pickResort"
-        @change="change"
-        @focus="(d) => (focused = d)"
-        @manage="(id) => (managing = managing === id ? null : id)"
-      />
-      <div class="board-foot">
-        <AddPerson :full="people.length >= MAX_PEOPLE" :busy="busy" @add="add" />
-        <p v-if="loaded && hasRow" class="tip">
-          Tap a day in your row to toggle it, or drag to fill a stretch. Drag from a marked day to clear.
-        </p>
-        <p v-else-if="loaded && !people.length" class="tip">Nobody's here yet. Be the first.</p>
+  <div class="shell">
+    <header class="topbar">
+      <svg class="topbar-range" viewBox="0 0 1440 64" preserveAspectRatio="none" aria-hidden="true">
+        <circle class="sun" cx="1190" cy="30" r="17" />
+        <path class="far" d="M0 64V44l120-16 90 10 150-28 110 20 80-10 140 24 120-20 110 12 170-30 120 22 90-8 140 18V64Z" />
+        <path class="near" d="M0 64V54l160-16 140 14 120-10 160 18 140-14 170 12 130-18 190 16 130-6V64Z" />
+      </svg>
+      <div class="brand">
+        <h1>Snow Window</h1>
+        <p class="tagline">When can the crew ski? Dec 2026 – Apr 2027</p>
       </div>
-    </section>
+      <div class="tabs" role="tablist" aria-label="Views" @keydown="onTabKey">
+        <button
+          v-for="t in TABS"
+          :id="`tab-${t.id}`"
+          :key="t.id"
+          type="button"
+          role="tab"
+          class="tab"
+          :aria-selected="tab === t.id"
+          :aria-controls="`panel-${t.id}`"
+          :tabindex="tab === t.id ? 0 : -1"
+          @click="tab = t.id"
+        >
+          <AppIcon :name="t.icon" />
+          <span class="tab-long">{{ t.label }}</span>
+          <span class="tab-short" aria-hidden="true">{{ t.short }}</span>
+        </button>
+      </div>
+    </header>
 
-    <div v-if="managed" class="manage-panel" role="dialog" :aria-label="`Options for ${managed.name}`">
-      <span class="avatar">{{ managed.emoji }}</span>
-      <strong>{{ managed.name }}</strong>
-      <button type="button" class="ghost" @click="copyLink(managed)">Copy edit link for another device</button>
-      <button type="button" class="ghost danger" @click="remove(managed)">Remove my row</button>
-      <button type="button" class="ghost icon-only" aria-label="Close" @click="managing = null"><AppIcon name="close" /></button>
-    </div>
+    <main class="stage">
+      <!-- Board: kept mounted so the timeline keeps its scroll position -->
+      <section v-show="tab === 'board'" id="panel-board" class="panel board-panel" role="tabpanel" aria-labelledby="tab-board">
+        <div class="board">
+          <div class="board-top">
+            <div class="legend">
+              <span><i class="sw sw-weekend" /> Weekend</span>
+              <span><i class="sw sw-holiday" /> Holiday</span>
+              <span v-for="k in KEY_DATES" :key="k.name"><i class="sw sw-key" /> {{ k.name }}</span>
+              <span><i class="sw sw-free" /> Free</span>
+              <span><i class="sw sw-fresh" /> Fresh snow</span>
+              <span><i class="sw sw-all" /> Everyone free</span>
+            </div>
+            <span v-if="store.kind === 'local'" class="demo">Demo: saved in this browser only</span>
+          </div>
+          <AvailabilityTimeline
+            ref="timeline"
+            :days="days"
+            :people="people"
+            :editable="editable"
+            :counts="counts"
+            :focused="focused"
+            :highlight="highlight"
+            :resort-id="resortId"
+            :forecast="forecasts?.[resortId] ?? null"
+            @resort="pickResort"
+            @change="change"
+            @focus="(d) => (focused = d)"
+            @manage="(id) => (managing = managing === id ? null : id)"
+          />
+        </div>
 
-    <div class="below">
-      <section v-if="focusInfo" class="day-card" aria-live="polite">
-        <h2>{{ formatLong(focusInfo.day) }}</h2>
-        <p class="marks">
-          <span v-if="focusInfo.mark.holiday" class="tag holiday-tag">{{ focusInfo.mark.holiday }}</span>
-          <span v-if="focusInfo.mark.keyDate" class="tag key-tag">{{ focusInfo.mark.keyDate }}</span>
-          <span v-if="focusInfo.mark.weekend" class="tag weekend-tag">Weekend</span>
-        </p>
-        <p v-if="!people.length">No one on the board yet.</p>
-        <p v-else>
-          <strong>{{ focusInfo.free.length }} of {{ people.length }}</strong> free<span v-if="focusInfo.free.length">:</span>
-          <span v-for="p in focusInfo.free" :key="p.id" class="who">{{ p.emoji }} {{ p.name }}</span>
-        </p>
-        <ul v-if="focusInfo.weather.length" class="fc-list">
-          <li v-for="x in focusInfo.weather" :key="x.resort.id" :class="{ fresh: x.w.snowCm >= 5 }">
-            <AppIcon :name="x.w.kind" :size="18" />
-            <span class="fc-resort">{{ x.resort.name }}</span>
-            <span class="fc-num">{{ x.w.snowCm ? `${x.w.snowCm} cm` : '' }}</span>
-            <span class="fc-num muted">{{ x.w.tMin }}° / {{ x.w.tMax }}°</span>
-          </li>
-        </ul>
-        <p v-else class="muted-note">No forecast for this day yet: forecasts reach 16 days ahead.</p>
+        <aside class="side" aria-label="Details">
+          <AddPerson :full="people.length >= MAX_PEOPLE" :busy="busy" @add="add" />
+
+          <section v-if="managed" class="manage-panel" :aria-label="`Options for ${managed.name}`">
+            <div class="manage-who">
+              <span class="avatar">{{ managed.emoji }}</span>
+              <strong>{{ managed.name }}</strong>
+              <button type="button" class="ghost icon-only" aria-label="Close" @click="managing = null"><AppIcon name="close" /></button>
+            </div>
+            <button type="button" class="ghost" @click="copyLink(managed)">Copy edit link for another device</button>
+            <button type="button" class="ghost danger" @click="remove(managed)">Remove my row</button>
+          </section>
+
+          <section v-if="focusInfo" class="day-card" aria-live="polite">
+            <h2>{{ formatLong(focusInfo.day) }}</h2>
+            <p v-if="focusInfo.mark.holiday || focusInfo.mark.keyDate || focusInfo.mark.weekend" class="marks">
+              <span v-if="focusInfo.mark.holiday" class="tag holiday-tag">{{ focusInfo.mark.holiday }}</span>
+              <span v-if="focusInfo.mark.keyDate" class="tag key-tag">{{ focusInfo.mark.keyDate }}</span>
+              <span v-if="focusInfo.mark.weekend" class="tag weekend-tag">Weekend</span>
+            </p>
+            <p v-if="!people.length">No one on the board yet.</p>
+            <p v-else>
+              <strong>{{ focusInfo.free.length }} of {{ people.length }}</strong> free<span v-if="focusInfo.free.length">:</span>
+              <span v-for="p in focusInfo.free" :key="p.id" class="who">{{ p.emoji }} {{ p.name }}</span>
+            </p>
+            <ul v-if="focusInfo.weather.length" class="fc-list">
+              <li v-for="x in focusInfo.weather" :key="x.resort.id" :class="{ fresh: x.w.snowCm >= 5 }">
+                <AppIcon :name="x.w.kind" :size="18" />
+                <span class="fc-resort">{{ x.resort.name }}</span>
+                <span class="fc-num">{{ x.w.snowCm ? `${x.w.snowCm} cm` : '' }}</span>
+                <span class="fc-num muted">{{ x.w.tMin }}° / {{ x.w.tMax }}°</span>
+              </li>
+            </ul>
+            <p v-else class="muted-note">No forecast yet: forecasts reach 16 days ahead.</p>
+          </section>
+          <section v-else class="how">
+            <h2>How it works</h2>
+            <ol>
+              <li>Add yourself with a name and an emoji.</li>
+              <li>Tap a day in your row, or drag across a stretch, to mark when you're free.</li>
+              <li>Orange days are when everyone's free. <em>Snow windows</em> lists the best stretches.</li>
+              <li>Tap any day for who's free and the snow forecast.</li>
+            </ol>
+          </section>
+        </aside>
       </section>
-      <BestWindows :counts="counts" :people="marked" :waiting="people.length - marked" @pick="pickWindow" />
-      <section class="holidays">
-        <h2>Holidays this season</h2>
-        <ul>
-          <li v-for="h in HOLIDAYS" :key="h.date">
-            <button type="button" @click="focused = h.date; timeline?.scrollToDay(h.date)">
-              <span class="hdate">{{ formatLong(h.date) }}</span> {{ h.name }}
-              <small>{{ h.scope }}</small>
-            </button>
-          </li>
-        </ul>
+
+      <section v-if="tab === 'windows'" id="panel-windows" class="panel split" role="tabpanel" aria-labelledby="tab-windows">
+        <BestWindows :counts="counts" :people="marked" :waiting="people.length - marked" @pick="pickWindow" />
+        <section class="holidays">
+          <h2>Holidays &amp; dates</h2>
+          <ul>
+            <li v-for="h in HOLIDAYS" :key="h.date">
+              <button type="button" @click="showOnBoard(h.date)">
+                <span class="hdate">{{ formatLong(h.date) }}</span> {{ h.name }}
+                <small>{{ h.scope }}</small>
+              </button>
+            </li>
+            <li v-for="k in KEY_DATES" :key="k.name">
+              <button type="button" @click="showOnBoard(k.start, { start: k.start, end: k.end })">
+                <span class="hdate key">{{ formatDayMonth(k.start) }} – {{ formatDayMonth(k.end) }}</span> {{ k.name }}
+              </button>
+            </li>
+          </ul>
+        </section>
       </section>
-    </div>
-  </main>
 
-  <footer class="foot">
-    <p v-if="forecastError" class="fc-error">Couldn't reach the weather service. Showing the last forecast, if there is one.</p>
-    <p>No sign-in: anyone with the link can add a row; only the device that made a row can change it. Up to {{ MAX_PEOPLE }} people.</p>
-    <p>Weather from <a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a>, 16 days ahead, refreshed every 30 minutes.</p>
-  </footer>
+      <section v-if="tab === 'resorts'" id="panel-resorts" class="panel scroll-panel" role="tabpanel" aria-labelledby="tab-resorts">
+        <ResortsTab :forecasts="forecasts" :resort-id="resortId" :error="forecastError" @use="useResort" />
+        <p class="credits">
+          Weather from <a href="https://open-meteo.com/" rel="noopener" target="_blank">Open-Meteo</a>, 16 days ahead, refreshed every 30 minutes.
+          Webcams open on each resort's own site.
+          No sign-in: anyone with the link can add a row; only the device that made a row can change it. Up to {{ MAX_PEOPLE }} people.
+        </p>
+      </section>
+    </main>
 
-  <div v-if="toast" class="toast" :class="{ error: toast.error }" role="status">{{ toast.text }}</div>
+    <div v-if="toast" class="toast" :class="{ error: toast.error }" role="status">{{ toast.text }}</div>
+  </div>
 </template>

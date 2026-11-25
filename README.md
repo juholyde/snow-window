@@ -4,11 +4,15 @@ A public board for finding when a group can go skiing or snowboarding in the 202
 
 ## Use
 
+One screen, three tabs: **Board** (timeline + details), **Snow windows** (best stretches, holidays), **Resorts** (7-day forecast and live webcams).
+
+
 - **Add yourself**: name + emoji. Up to 20 people.
 - **Mark days**: tap a day in your row to toggle it; drag to fill a stretch, or drag from a marked day to clear one.
 - **Whole crew row**: how many are free each day; a green ✓ when everyone who has marked days is free.
 - **Snow windows**: the longest stretches when everyone is free (or, failing that, the most people), with nights, weekend days and holidays inside.
 - **Snow forecast row**: pick a resort (Baqueira, La Molina, Grandvalira, Pal Arinsal, Formigal, Cerler, Sierra Nevada); each day within 16 days shows the sky, snowfall and max temperature from [Open-Meteo](https://open-meteo.com/). Days with 5 cm or more of fresh snow light up orange. Tapping a day lists every resort.
+- **Resorts tab**: the seven resorts sorted by snow in the next week, each with its own live-webcam page and a webcam archive (links in `src/config/resorts.ts`, checked 2026-11-25).
 - **No sign-in.** Adding a row gives this device an edit token. ⋯ → *Copy edit link* opens your row on another device.
 
 ## Develop

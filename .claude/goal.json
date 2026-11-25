@@ -133,9 +133,23 @@
       "dependsOn": [
         "t6"
       ]
+    },
+    {
+      "id": "t9",
+      "title": "One-screen app with tabs (Board, Snow windows, Resorts) and resort webcams",
+      "kind": "build",
+      "status": "done",
+      "importance": 4,
+      "size": "M",
+      "milestone": "m1",
+      "why": "Juho: keep everything on one page without scrolling; add a tab for the resorts with webcams.",
+      "doneWhen": "100dvh shell, sticky timeline header/crew/forecast rows, side panel; Resorts tab with 7-day forecast and official webcam links checked 2026-11-25.",
+      "dependsOn": [
+        "t7"
+      ]
     }
   ],
-  "next": "t9",
+  "next": "t10",
   "questions": [
     {
       "question": "Season range",

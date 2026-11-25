@@ -12,6 +12,10 @@ export type IconName =
   | 'rain'
   | 'snow'
   | 'storm'
+  | 'external'
+  | 'calendar'
+  | 'mountain'
+  | 'board'
 
 withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 18 })
 </script>
@@ -58,6 +62,19 @@ withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 18 })
     <g v-else-if="name === 'snow'">
       <path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9" />
       <path d="M9.5 4.5L12 6.5l2.5-2M9.5 19.5l2.5-2 2.5 2" />
+    </g>
+    <path v-else-if="name === 'external'" d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" />
+    <g v-else-if="name === 'calendar'">
+      <rect x="4" y="5.5" width="16" height="14" rx="2" />
+      <path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" />
+    </g>
+    <g v-else-if="name === 'mountain'">
+      <path d="M2.5 19.5l7-12 4.5 7.5 2.5-3.5 5 8z" />
+      <path d="M7.4 11l2.1 1.5 2-1.2" />
+    </g>
+    <g v-else-if="name === 'board'">
+      <rect x="3.5" y="5" width="17" height="14" rx="2" />
+      <path d="M3.5 10h17M9 10v9" />
     </g>
     <g v-else-if="name === 'storm'">
       <path d="M7 14.5h10.5a3.5 3.5 0 0 0 .3-7 5 5 0 0 0-9.6 1.4A2.8 2.8 0 0 0 7 14.5z" />

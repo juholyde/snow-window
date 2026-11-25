@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Resort } from '../src/config/resorts'
 import { loadForecasts, parseForecast, weatherKind } from '../src/lib/weather'
 
-const resort = (id: string): Resort => ({ id, name: id, region: 'x', lat: 42, lon: 1, elevation: 2000 })
+const resort = (id: string): Resort => ({ id, name: id, region: 'x', lat: 42, lon: 1, elevation: 2000, webcams: [] })
 const place = (snow: number) => ({
   daily: {
     time: ['2026-12-01', '2026-12-02'],
