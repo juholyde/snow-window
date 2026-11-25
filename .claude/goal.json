@@ -122,14 +122,14 @@
     },
     {
       "id": "t8",
-      "title": "Codex generates sun, tycoon skier and Rufus art; pull branch codex/art and place it",
+      "title": "Place the remaining Codex art (Rufus, sun, tycoon skier) in the app",
       "kind": "build",
       "status": "todo",
       "importance": 3,
       "size": "S",
       "milestone": "m1",
-      "why": "Character art makes the board memorable; brief in docs/handoff/codex-images.md. Codex wrote PNGs straight into public/art/ and generated_images/ (untracked, not on codex/art) on 2026-11-25; review and place them.",
-      "doneWhen": "Art merged from codex/art and shown in the hero / empty states.",
+      "why": "Codex's set is committed in public/art (85c628b) and the panorama, wordmark and favicon are in use. Rufus lost his spot when the empty-board state went away with crews; sun and tycoon skier are not placed yet. Raw drafts stay untracked in generated_images/.",
+      "doneWhen": "Rufus, sun and tycoon skier each have a place (e.g. welcome card, empty Trips, Snow windows) or Juho drops them.",
       "dependsOn": [
         "t6"
       ]
@@ -213,7 +213,7 @@
       "size": "M",
       "milestone": "m1",
       "why": "Juho asked 2026-11-25 for an auth path and named crews collecting people, joined by invite link.",
-      "doneWhen": "Migration + 6 PGlite tests, CrewStore (Local + Supabase), welcome/join card, crew panel, crew switcher, account dialog; verified in the browser on LocalStore 2026-11-25. Not yet committed: shares App.vue/style.css with Codex's in-flight art edits.",
+      "doneWhen": "Migration + 6 PGlite tests, CrewStore (Local + Supabase), welcome/join card, crew panel, crew switcher, account dialog; verified in the browser on LocalStore; commit 85c628b (2026-11-25).",
       "dependsOn": [
         "t11"
       ]
