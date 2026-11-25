@@ -70,12 +70,12 @@
       "id": "t4",
       "title": "Clarify trip suggestions: fields, day trip vs multi-day, accommodation, who decides",
       "kind": "clarify",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "S",
       "milestone": "m2",
       "why": "Section 2 of the idea; Juho wanted to look at it after the board.",
-      "doneWhen": "Answers logged in questions; build tasks filed under m2.",
+      "doneWhen": "Answered 2026-11-25: stay = link + price per night + note; dates = any stretch, showing who is free; outcome = tally, proposer marks it On; responders = anyone with a row, as that row. Built as t10.",
       "dependsOn": [
         "t1"
       ]
@@ -128,7 +128,7 @@
       "importance": 3,
       "size": "S",
       "milestone": "m1",
-      "why": "Character art makes the board memorable; brief in docs/handoff/codex-images.md.",
+      "why": "Character art makes the board memorable; brief in docs/handoff/codex-images.md. Codex wrote PNGs straight into public/art/ and generated_images/ (untracked, not on codex/art) on 2026-11-25; review and place them.",
       "doneWhen": "Art merged from codex/art and shown in the hero / empty states.",
       "dependsOn": [
         "t6"
@@ -147,9 +147,23 @@
       "dependsOn": [
         "t7"
       ]
+    },
+    {
+      "id": "t10",
+      "title": "Trips tab: suggest a day trip or stay, group answers Going/Maybe/Can't, proposer marks it on",
+      "kind": "build",
+      "status": "done",
+      "importance": 4,
+      "size": "L",
+      "milestone": "m2",
+      "why": "Section 2 of the idea: turn snow windows into concrete trip suggestions.",
+      "doneWhen": "Migration with suggestions + responses and RPCs (max 40 trips, 14 days, https stay links), composer with date picks and coverage, trip cards with stay cost and tally, verified desktop + mobile (2026-11-25).",
+      "dependsOn": [
+        "t4"
+      ]
     }
   ],
-  "next": "t10",
+  "next": "t11",
   "questions": [
     {
       "question": "Season range",

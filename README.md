@@ -4,14 +4,14 @@ A public board for finding when a group can go skiing or snowboarding in the 202
 
 ## Use
 
-One screen, three tabs: **Board** (timeline + details), **Snow windows** (best stretches, holidays), **Resorts** (7-day forecast and live webcams).
-
+One screen, four tabs: **Board** (timeline + details), **Snow windows** (best stretches, holidays), **Trips** (suggestions and answers), **Resorts** (7-day forecast and live webcams).
 
 - **Add yourself**: name + emoji. Up to 20 people.
 - **Mark days**: tap a day in your row to toggle it; drag to fill a stretch, or drag from a marked day to clear one.
 - **Whole crew row**: how many are free each day; a green ✓ when everyone who has marked days is free.
 - **Snow windows**: the longest stretches when everyone is free (or, failing that, the most people), with nights, weekend days and holidays inside.
 - **Snow forecast row**: pick a resort (Baqueira, La Molina, Grandvalira, Pal Arinsal, Formigal, Cerler, Sierra Nevada); each day within 16 days shows the sky, snowfall and max temperature from [Open-Meteo](https://open-meteo.com/). Days with 5 cm or more of fresh snow light up orange. Tapping a day lists every resort.
+- **Trips tab**: anyone with a row suggests a day trip or a stay of up to 14 days at one of the resorts, from a snow window or any dates. A stay can carry a link, a price per person per night and a note. Everyone answers Going / Maybe / Can't as their own row; the card shows the tally and who is free for all of it. The proposer marks it *on*, reopens or cancels it. At most 40 trips.
 - **Resorts tab**: the seven resorts sorted by snow in the next week, each with its own live-webcam page and a webcam archive (links in `src/config/resorts.ts`, checked 2026-11-25).
 - **No sign-in.** Adding a row gives this device an edit token. ⋯ → *Copy edit link* opens your row on another device.
 
@@ -29,7 +29,7 @@ Without `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` the app runs on 
 
 ## Data
 
-Schema `app_snow_window` in the shared Supabase sandbox (`~/projects/supabase-sandbox`). Visitors are anonymous: the `people` table has no policies, so nobody reads or writes it directly. Everything goes through security-definer functions (`get_board`, `add_person`, `set_days`, `remove_person`) that enforce the guardrails: at most 20 people, names ≤ 24 characters, days inside 1 Dec 2026 – 30 Apr 2027, and edits only with the row's token. The token is never returned by `get_board`.
+Schema `app_snow_window` in the shared Supabase sandbox (`~/projects/supabase-sandbox`). Visitors are anonymous: the `people` table has no policies, so nobody reads or writes it directly. Everything goes through security-definer functions (`get_board`, `add_person`, `set_days`, `remove_person`, and for trips `get_trips`, `create_trip`, `respond`, `set_trip_status`) that enforce the guardrails: at most 20 people, names ≤ 24 characters, days inside 1 Dec 2026 – 30 Apr 2027, and edits only with the row's token. The token is never returned by `get_board`.
 
 ## Look
 

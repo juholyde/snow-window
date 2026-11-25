@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Day } from './dates'
 import type { Person } from './overlap'
 import { BoardFullError, type BoardStore } from './store'
+import { type Answer, cleanDraft, type Trip, type TripDraft, type TripStatus } from './trips'
 
 /**
  * The shared board in the Supabase sandbox (schema app_snow_window).
@@ -12,6 +13,9 @@ const ERROR_COPY: Record<string, string> = {
   board_full: "The board is full (20 people).",
   not_your_row: "That row was made on another device. Open its edit link here to change it.",
   day_outside_season: "Pick days inside the season (1 Dec – 30 Apr).",
+  trips_full: "There are already 40 suggestions.",
+  trip_closed: "That trip was cancelled.",
+  not_your_trip: "Only the person who suggested a trip can change it.",
 }
 
 function fail(message: string): Error {
@@ -47,6 +51,45 @@ export class SupabaseStore implements BoardStore {
 
   async removePerson(id: string, token: string) {
     const { error } = await this.rpc('remove_person', { p_id: id, p_token: token })
+    if (error) throw fail(error.message)
+  }
+
+  async loadTrips(): Promise<Trip[]> {
+    const { data, error } = await this.rpc('get_trips')
+    if (error) throw fail(error.message)
+    return (data as Trip[]).map((t) => ({ ...t, stayPrice: t.stayPrice === null ? null : Number(t.stayPrice) }))
+  }
+
+  async createTrip(personId: string, token: string, draft: TripDraft) {
+    const d = cleanDraft(draft)
+    const { data, error } = await this.rpc('create_trip', {
+      p_person: personId,
+      p_token: token,
+      p_resort: d.resortId,
+      p_start: d.start,
+      p_end: d.end,
+      p_title: d.title,
+      p_note: d.note,
+      p_stay_url: d.stayUrl,
+      p_stay_price: d.stayPrice,
+      p_stay_note: d.stayNote,
+    })
+    if (error) throw fail(error.message)
+    return data as string
+  }
+
+  async respond(tripId: string, personId: string, token: string, answer: Answer) {
+    const { error } = await this.rpc('respond', { p_trip: tripId, p_person: personId, p_token: token, p_answer: answer })
+    if (error) throw fail(error.message)
+  }
+
+  async setTripStatus(tripId: string, personId: string, token: string, status: TripStatus) {
+    const { error } = await this.rpc('set_trip_status', {
+      p_trip: tripId,
+      p_person: personId,
+      p_token: token,
+      p_status: status,
+    })
     if (error) throw fail(error.message)
   }
 }

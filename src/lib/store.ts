@@ -1,6 +1,7 @@
 import type { Day } from './dates'
 import type { Person } from './overlap'
 import { cleanDays, cleanEmoji, cleanName, MAX_PEOPLE } from './rules'
+import { type Answer, cleanDraft, MAX_TRIPS, type Trip, type TripDraft, type TripStatus } from './trips'
 
 /**
  * Where the board lives. No sign-in: whoever adds a row gets an edit token,
@@ -12,6 +13,10 @@ export interface BoardStore {
   addPerson(name: string, emoji: string): Promise<{ person: Person; token: string }>
   setDays(id: string, token: string, days: Day[]): Promise<void>
   removePerson(id: string, token: string): Promise<void>
+  loadTrips(): Promise<Trip[]>
+  createTrip(personId: string, token: string, draft: TripDraft): Promise<string>
+  respond(tripId: string, personId: string, token: string, answer: Answer): Promise<void>
+  setTripStatus(tripId: string, personId: string, token: string, status: TripStatus): Promise<void>
 }
 
 export class BoardFullError extends Error {
@@ -68,6 +73,64 @@ export class LocalStore implements BoardStore {
     const rows = this.read()
     this.owned(rows, id, token)
     this.write(rows.filter((r) => r.id !== id))
+    // Their trips and answers go with the row, as in the database.
+    const trips = this.readTrips().filter((t) => t.proposerId !== id)
+    for (const t of trips) delete t.responses[id]
+    this.writeTrips(trips)
+  }
+
+  private readTrips(): Trip[] {
+    return JSON.parse(this.storage.getItem(`${this.key}:trips`) ?? '[]') as Trip[]
+  }
+
+  private writeTrips(trips: Trip[]) {
+    this.storage.setItem(`${this.key}:trips`, JSON.stringify(trips))
+  }
+
+  async loadTrips(): Promise<Trip[]> {
+    return this.readTrips()
+  }
+
+  async createTrip(personId: string, token: string, draft: TripDraft) {
+    this.owned(this.read(), personId, token)
+    const trips = this.readTrips()
+    if (trips.length >= MAX_TRIPS) throw new Error(`There are already ${MAX_TRIPS} suggestions.`)
+    const d = cleanDraft(draft)
+    const trip: Trip = {
+      id: crypto.randomUUID(),
+      proposerId: personId,
+      resortId: d.resortId,
+      start: d.start,
+      end: d.end,
+      title: d.title || null,
+      note: d.note || null,
+      stayUrl: d.stayUrl || null,
+      stayPrice: d.stayPrice,
+      stayNote: d.stayNote || null,
+      status: 'open',
+      createdAt: new Date().toISOString(),
+      responses: { [personId]: 'yes' },
+    }
+    this.writeTrips([trip, ...trips])
+    return trip.id
+  }
+
+  async respond(tripId: string, personId: string, token: string, answer: Answer) {
+    this.owned(this.read(), personId, token)
+    const trips = this.readTrips()
+    const trip = trips.find((t) => t.id === tripId && t.status !== 'cancelled')
+    if (!trip) throw new Error('That trip is closed.')
+    trip.responses[personId] = answer
+    this.writeTrips(trips)
+  }
+
+  async setTripStatus(tripId: string, personId: string, token: string, status: TripStatus) {
+    this.owned(this.read(), personId, token)
+    const trips = this.readTrips()
+    const trip = trips.find((t) => t.id === tripId && t.proposerId === personId)
+    if (!trip) throw new Error('Only the person who suggested a trip can change it.')
+    trip.status = status
+    this.writeTrips(trips)
   }
 }
 

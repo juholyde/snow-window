@@ -11,6 +11,8 @@ import { RESORTS } from './config/resorts'
 import { type Forecasts, loadForecasts } from './lib/weather'
 import AppIcon from './components/AppIcon.vue'
 import ResortsTab from './components/ResortsTab.vue'
+import TripsTab from './components/TripsTab.vue'
+import type { Answer, Trip, TripDraft, TripStatus } from './lib/trips'
 import { type BoardStore, claimLink, parseClaim, TokenKeeper } from './lib/store'
 
 const props = defineProps<{ store: BoardStore }>()
@@ -18,6 +20,7 @@ const props = defineProps<{ store: BoardStore }>()
 const tokens = new TokenKeeper(localStorage)
 const days = eachDay(SEASON.start, SEASON.end)
 const people = shallowRef<Person[]>([])
+const trips = shallowRef<Trip[]>([])
 const loaded = ref(false)
 const busy = ref(false)
 const toast = ref<{ text: string; error?: boolean } | null>(null)
@@ -59,7 +62,9 @@ function say(text: string, error = false) {
 
 async function refresh() {
   try {
-    people.value = await props.store.load()
+    const [p, t] = await Promise.all([props.store.load(), props.store.loadTrips()])
+    people.value = p
+    trips.value = t
     loaded.value = true
   } catch (e) {
     say(`Couldn't load the board: ${(e as Error).message}`, true)
@@ -122,10 +127,11 @@ async function remove(p: Person) {
   }
 }
 
-type Tab = 'board' | 'windows' | 'resorts'
-const TABS: { id: Tab; label: string; short: string; icon: 'board' | 'calendar' | 'mountain' }[] = [
+type Tab = 'board' | 'windows' | 'trips' | 'resorts'
+const TABS: { id: Tab; label: string; short: string; icon: 'board' | 'calendar' | 'mountain' | 'snow' }[] = [
   { id: 'board', label: 'Board', short: 'Board', icon: 'board' },
   { id: 'windows', label: 'Snow windows', short: 'Windows', icon: 'calendar' },
+  { id: 'trips', label: 'Trips', short: 'Trips', icon: 'snow' },
   { id: 'resorts', label: 'Resorts', short: 'Resorts', icon: 'mountain' },
 ]
 const tab = ref<Tab>('board')
@@ -142,6 +148,50 @@ async function showOnBoard(day: Day, range?: { start: Day; end: Day }) {
 function pickWindow(w: TripWindow) {
   showOnBoard(w.start, { start: w.start, end: w.end })
 }
+
+const mine = computed(() => people.value.filter((p) => editable.value.has(p.id)))
+const composing = ref(false)
+const prefill = ref<{ start: Day; end: Day } | null>(null)
+const openTrips = computed(() => trips.value.filter((t) => t.status !== 'cancelled').length)
+
+function suggestFrom(w: TripWindow) {
+  prefill.value = { start: w.start, end: w.end }
+  composing.value = true
+  tab.value = 'trips'
+}
+
+async function tripAction(run: (token: string) => Promise<unknown>, personId: string, ok?: string) {
+  const token = tokens.get(personId)
+  if (!token) return false
+  busy.value = true
+  try {
+    await run(token)
+    trips.value = await props.store.loadTrips()
+    if (ok) say(ok)
+    return true
+  } catch (e) {
+    say((e as Error).message, true)
+    return false
+  } finally {
+    busy.value = false
+  }
+}
+
+async function createTrip(personId: string, draft: TripDraft) {
+  const done = await tripAction((t) => props.store.createTrip(personId, t, draft), personId, 'Suggested. The group can answer now.')
+  if (done) {
+    composing.value = false
+    prefill.value = null
+  }
+}
+const respond = (tripId: string, personId: string, answer: Answer) =>
+  tripAction((t) => props.store.respond(tripId, personId, t, answer), personId)
+const setStatus = (tripId: string, personId: string, status: TripStatus) =>
+  tripAction(
+    (t) => props.store.setTripStatus(tripId, personId, t, status),
+    personId,
+    status === 'on' ? "It's on! Everyone can see it." : undefined,
+  )
 
 function useResort(id: string) {
   pickResort(id)
@@ -233,6 +283,7 @@ onBeforeUnmount(() => {
           <AppIcon :name="t.icon" />
           <span class="tab-long">{{ t.label }}</span>
           <span class="tab-short" aria-hidden="true">{{ t.short }}</span>
+          <span v-if="t.id === 'trips' && openTrips" class="tab-count">{{ openTrips }}</span>
         </button>
       </div>
     </header>
@@ -317,7 +368,7 @@ onBeforeUnmount(() => {
       </section>
 
       <section v-if="tab === 'windows'" id="panel-windows" class="panel split" role="tabpanel" aria-labelledby="tab-windows">
-        <BestWindows :counts="counts" :people="marked" :waiting="people.length - marked" @pick="pickWindow" />
+        <BestWindows :counts="counts" :people="marked" :waiting="people.length - marked" @pick="pickWindow" @suggest="suggestFrom" />
         <section class="holidays">
           <h2>Holidays &amp; dates</h2>
           <ul>
@@ -334,6 +385,25 @@ onBeforeUnmount(() => {
             </li>
           </ul>
         </section>
+      </section>
+
+      <section v-if="tab === 'trips'" id="panel-trips" class="panel" role="tabpanel" aria-labelledby="tab-trips">
+        <TripsTab
+          :trips="trips"
+          :people="people"
+          :mine="mine"
+          :counts="counts"
+          :forecasts="forecasts"
+          :resort-id="resortId"
+          :prefill="prefill"
+          :composing="composing"
+          :busy="busy"
+          @create="createTrip"
+          @respond="respond"
+          @status="setStatus"
+          @show="(r) => showOnBoard(r.start, r)"
+          @compose="(open) => { composing = open; if (!open) prefill = null }"
+        />
       </section>
 
       <section v-if="tab === 'resorts'" id="panel-resorts" class="panel scroll-panel" role="tabpanel" aria-labelledby="tab-resorts">

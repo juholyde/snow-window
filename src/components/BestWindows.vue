@@ -5,7 +5,7 @@ import { type Day, formatLong } from '../lib/dates'
 import { findWindows, type TripWindow } from '../lib/overlap'
 
 const props = defineProps<{ counts: Map<Day, number>; people: number; waiting: number }>()
-const emit = defineEmits<{ pick: [w: TripWindow] }>()
+const emit = defineEmits<{ pick: [w: TripWindow]; suggest: [w: TripWindow] }>()
 
 /** Everyone if that finds anything, else the most people any day has. */
 const result = computed(() => {
@@ -38,7 +38,7 @@ function range(w: TripWindow) {
       </p>
     </header>
     <ol v-if="result.windows.length">
-      <li v-for="w in result.windows" :key="w.start">
+      <li v-for="w in result.windows" :key="w.start" class="window-row">
         <button type="button" class="window" @click="emit('pick', w)">
           <span class="len" :class="{ day: w.length === 1 }">
             <strong>{{ w.length }}</strong>
@@ -55,6 +55,7 @@ function range(w: TripWindow) {
             </span>
           </span>
         </button>
+        <button type="button" class="ghost suggest" @click="emit('suggest', w)">Suggest trip</button>
       </li>
     </ol>
   </section>
