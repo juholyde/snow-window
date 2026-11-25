@@ -1,25 +1,40 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import AddPerson from './components/AddPerson.vue'
-import BestWindows from './components/BestWindows.vue'
+import AccountDialog from './components/AccountDialog.vue'
+import AppIcon from './components/AppIcon.vue'
 import AvailabilityTimeline from './components/AvailabilityTimeline.vue'
+import BestWindows from './components/BestWindows.vue'
+import CrewPanel from './components/CrewPanel.vue'
+import ResortsTab from './components/ResortsTab.vue'
+import TripsTab, { type TripsView } from './components/TripsTab.vue'
+import WelcomeCard from './components/WelcomeCard.vue'
 import { HOLIDAYS, KEY_DATES, SEASON } from './config/calendar'
+import { RESORTS } from './config/resorts'
 import { type Day, eachDay, formatDayMonth, formatLong, todayLocal } from './lib/dates'
 import { countByDay, markDay, type Person, type TripWindow } from './lib/overlap'
 import { MAX_PEOPLE } from './lib/rules'
-import { RESORTS } from './config/resorts'
-import { type Forecasts, loadForecasts } from './lib/weather'
-import AppIcon from './components/AppIcon.vue'
-import ResortsTab from './components/ResortsTab.vue'
-import TripsTab, { type TripsView } from './components/TripsTab.vue'
-import { type Answer, MAX_TRIP_DAYS, type Trip, type TripDraft, type TripStatus } from './lib/trips'
 import { type Range, span } from './lib/selection'
-import { type BoardStore, claimLink, parseClaim, TokenKeeper } from './lib/store'
+import { type Crew, type CrewPreview, type CrewStore, inviteLink, parseInvite, type Session } from './lib/store'
+import { type Answer, MAX_TRIP_DAYS, type Trip, type TripDraft, type TripStatus } from './lib/trips'
+import { type Forecasts, loadForecasts } from './lib/weather'
 
-const props = defineProps<{ store: BoardStore }>()
+const props = defineProps<{ store: CrewStore }>()
 
-const tokens = new TokenKeeper(localStorage)
+const CREW_KEY = 'snow-window:crew'
+const art = import.meta.env.BASE_URL + 'art/'
 const days = eachDay(SEASON.start, SEASON.end)
+
+const session = ref<Session | null>(null)
+const profile = shallowRef<Person | null>(null)
+const crews = shallowRef<Crew[]>([])
+const crewId = ref<string | null>(null)
+const invite = ref<string | null>(null)
+const preview = shallowRef<CrewPreview | null>(null)
+const badInvite = ref(false)
+const creating = ref(false)
+const accountOpen = ref(false)
+const startError = ref<string | null>(null)
+
 const people = shallowRef<Person[]>([])
 const trips = shallowRef<Trip[]>([])
 const loaded = ref(false)
@@ -27,8 +42,6 @@ const busy = ref(false)
 const toast = ref<{ text: string; error?: boolean } | null>(null)
 const focused = ref<Day | null>(null)
 const highlight = ref<{ start: Day; end: Day } | null>(null)
-const managing = ref<string | null>(null)
-const tokenVersion = ref(0)
 const forecasts = shallowRef<Forecasts | null>(null)
 const forecastError = ref(false)
 const resortId = ref(localStorage.getItem('snow-window:resort') ?? RESORTS[0]?.id ?? '')
@@ -46,11 +59,12 @@ async function refreshForecast() {
 }
 const timeline = ref<InstanceType<typeof AvailabilityTimeline> | null>(null)
 
-const editable = computed(() => {
-  tokenVersion.value
-  const mine = tokens.all()
-  return new Set(people.value.filter((p) => mine[p.id]).map((p) => p.id))
-})
+const crew = computed(() => crews.value.find((c) => c.id === crewId.value) ?? null)
+/** The welcome card shows with no crew, while an invite waits, or while starting another crew. */
+const welcome = computed(() => Boolean(session.value) && (!crew.value || Boolean(preview.value) || creating.value))
+const me = computed(() => session.value?.userId ?? '')
+const editable = computed(() => new Set(profile.value ? [me.value] : []))
+const mine = computed(() => people.value.filter((p) => p.id === me.value))
 const counts = computed(() => countByDay(people.value))
 const marked = computed(() => people.value.filter((p) => p.days.length).length)
 
@@ -61,71 +75,218 @@ function say(text: string, error = false) {
   toastTimer = setTimeout(() => (toast.value = null), error ? 6000 : 3500)
 }
 
-async function refresh() {
-  try {
-    const [p, t] = await Promise.all([props.store.load(), props.store.loadTrips()])
-    people.value = p
-    trips.value = t
-    loaded.value = true
-  } catch (e) {
-    say(`Couldn't load the board: ${(e as Error).message}`, true)
-  }
-}
-
-async function add(name: string, emoji: string) {
+/** Runs one store call with the busy flag and turns failures into a toast. */
+async function act<T>(run: () => Promise<T>, ok?: string): Promise<{ value: T } | null> {
   busy.value = true
   try {
-    const { person, token } = await props.store.addPerson(name, emoji)
-    tokens.set(person.id, token)
-    tokenVersion.value++
-    await refresh()
-    say(`Welcome ${person.emoji}! Tap or drag across your row to mark the days you can go.`)
+    const value = await run()
+    if (ok) say(ok)
+    return { value }
   } catch (e) {
     say((e as Error).message, true)
+    return null
   } finally {
     busy.value = false
   }
 }
 
+function selectCrew(id: string | null) {
+  crewId.value = id
+  if (id) localStorage.setItem(CREW_KEY, id)
+  else localStorage.removeItem(CREW_KEY)
+  people.value = []
+  trips.value = []
+  loaded.value = false
+  tripsPicked.value = null
+  tripRange.value = null
+  if (id) refresh()
+}
+
+async function loadMine() {
+  ;[profile.value, crews.value] = await Promise.all([props.store.profile(), props.store.crews()])
+  const saved = localStorage.getItem(CREW_KEY)
+  const pick = crews.value.find((c) => c.id === crewId.value) ?? crews.value.find((c) => c.id === saved) ?? crews.value[0]
+  if (pick?.id !== crewId.value) selectCrew(pick?.id ?? null)
+}
+
+async function refresh() {
+  const id = crewId.value
+  if (!id) return
+  try {
+    const board = await props.store.loadCrew(id)
+    if (id !== crewId.value) return
+    people.value = board.people
+    trips.value = board.trips
+    const first = !loaded.value
+    loaded.value = true
+    if (first) {
+      await nextTick()
+      const begin = todayLocal() > SEASON.start && todayLocal() <= SEASON.end ? todayLocal() : SEASON.start
+      timeline.value?.scrollToDay(begin, false)
+    }
+  } catch (e) {
+    say(`Couldn't load the crew: ${(e as Error).message}`, true)
+  }
+}
+
+async function start() {
+  startError.value = null
+  try {
+    session.value = await props.store.session()
+    await loadMine()
+  } catch (e) {
+    startError.value = (e as Error).message
+    return
+  }
+  const code = parseInvite(location.hash)
+  if (code) {
+    history.replaceState(null, '', location.pathname + location.search)
+    await openInvite(code)
+  }
+}
+
+async function openInvite(code: string) {
+  const res = await act(() => props.store.preview(code))
+  if (!res) return
+  const found = res.value
+  const already = found && crews.value.find((c) => c.id === found.id)
+  if (already) {
+    selectCrew(already.id)
+    say(`You're already in ${already.name}.`)
+  } else if (found) {
+    invite.value = code
+    preview.value = found
+  } else badInvite.value = true
+}
+
+async function saveProfileIfNeeded(name: string, emoji: string) {
+  if (!profile.value) await props.store.saveProfile(name, emoji)
+}
+
+async function createCrew(name: string, emoji: string, crewName: string) {
+  const res = await act(async () => {
+    await saveProfileIfNeeded(name, emoji)
+    return props.store.createCrew(crewName)
+  })
+  if (!res) return
+  const id = res.value
+  creating.value = false
+  badInvite.value = false
+  await loadMine()
+  selectCrew(id)
+  say('Crew made. Copy the invite link and send it to your friends.')
+}
+
+async function joinCrew(name: string, emoji: string) {
+  const code = invite.value
+  if (!code) return
+  const res = await act(async () => {
+    await saveProfileIfNeeded(name, emoji)
+    return props.store.joinCrew(code)
+  })
+  if (!res) return
+  const id = res.value
+  const joined = preview.value?.name
+  cancelWelcome()
+  await loadMine()
+  selectCrew(id)
+  say(`You're in ${joined}. Tap or drag across your row to mark the days you can go.`)
+}
+
+function cancelWelcome() {
+  creating.value = false
+  preview.value = null
+  invite.value = null
+  badInvite.value = false
+}
+
 async function change(id: string, next: Day[]) {
-  const token = tokens.get(id)
-  if (!token) return
+  if (id !== me.value) return
   const before = people.value
   people.value = before.map((p) => (p.id === id ? { ...p, days: next } : p))
   try {
-    await props.store.setDays(id, token, next)
+    await props.store.setDays(next)
   } catch (e) {
     people.value = before
     say(`Not saved: ${(e as Error).message}`, true)
   }
 }
 
-const managed = computed(() => people.value.find((p) => p.id === managing.value) ?? null)
-
-async function copyLink(p: Person) {
-  const token = tokens.get(p.id)
-  if (!token) return
-  const link = claimLink(location.href, p.id, token)
+async function copyInvite() {
+  if (!crew.value) return
+  const link = inviteLink(location.origin + location.pathname, crew.value.inviteCode)
   try {
     await navigator.clipboard.writeText(link)
-    say('Link copied. Open it on your other device to edit your row there. Keep it to yourself.')
+    say('Invite link copied. Anyone who opens it can join the crew.')
   } catch {
-    window.prompt('Copy this link to edit your row on another device:', link)
+    window.prompt('Copy this invite link:', link)
   }
 }
 
-async function remove(p: Person) {
-  const token = tokens.get(p.id)
-  if (!token || !window.confirm(`Remove ${p.name} and all their days from the board?`)) return
-  try {
-    await props.store.removePerson(p.id, token)
-    tokens.forget(p.id)
-    tokenVersion.value++
-    managing.value = null
-    await refresh()
-  } catch (e) {
-    say((e as Error).message, true)
-  }
+async function renameCrew(name: string) {
+  const id = crewId.value
+  if (id && await act(() => props.store.renameCrew(id, name), 'Renamed.')) await loadMine()
+}
+
+async function resetInvite() {
+  const id = crewId.value
+  if (!id || !window.confirm('Make a new invite link? The old link stops working.')) return
+  if (await act(() => props.store.resetInvite(id), 'New link made. The old one no longer works.')) await loadMine()
+}
+
+async function removeMember(p: Person) {
+  const id = crewId.value
+  if (!id || !window.confirm(`Remove ${p.name} from the crew? Their suggestions and answers here go too.`)) return
+  if (await act(() => props.store.removeMember(id, p.id), `${p.name} is out of the crew.`)) await refresh()
+}
+
+async function leaveCrew() {
+  const c = crew.value
+  if (!c || !window.confirm(`Leave ${c.name}? Your suggestions and answers there go too.`)) return
+  if (!(await act(() => props.store.leaveCrew(c.id), `You left ${c.name}.`))) return
+  selectCrew(null)
+  await loadMine()
+}
+
+async function saveProfile(name: string, emoji: string) {
+  if (!(await act(() => props.store.saveProfile(name, emoji), 'Saved.'))) return
+  profile.value = await props.store.profile()
+  await refresh()
+}
+
+async function saveAccount(email: string) {
+  const done = await act(
+    () => props.store.saveAccount(email),
+    props.store.kind === 'shared' ? 'Check your email and open the link to finish saving.' : 'Saved.',
+  )
+  if (!done) return
+  session.value = await props.store.session()
+  accountOpen.value = false
+}
+
+async function signIn(email: string) {
+  if (!(await act(() => props.store.signIn(email)))) return
+  accountOpen.value = false
+  if (props.store.kind === 'shared') say('Check your email for the sign-in link.')
+  else await start()
+}
+
+async function signOut() {
+  if (!(await act(() => props.store.signOut()))) return
+  accountOpen.value = false
+  localStorage.removeItem(CREW_KEY)
+  crewId.value = null
+  people.value = []
+  trips.value = []
+  await start()
+}
+
+function onCrewSelect(e: Event) {
+  const value = (e.target as HTMLSelectElement).value
+  if (value === '+new') {
+    creating.value = true
+    ;(e.target as HTMLSelectElement).value = crewId.value ?? ''
+  } else selectCrew(value)
 }
 
 type Tab = 'board' | 'windows' | 'trips' | 'resorts'
@@ -150,7 +311,6 @@ function pickWindow(w: TripWindow) {
   showOnBoard(w.start, { start: w.start, end: w.end })
 }
 
-const mine = computed(() => people.value.filter((p) => editable.value.has(p.id)))
 const openTrips = computed(() => trips.value.filter((t) => t.status !== 'cancelled').length)
 // Trips opens on Answer when there is something to answer, otherwise on Suggest.
 const tripsPicked = ref<TripsView | null>(null)
@@ -163,38 +323,23 @@ function suggestFrom(w: TripWindow) {
   tab.value = 'trips'
 }
 
-async function tripAction(run: (token: string) => Promise<unknown>, personId: string, ok?: string) {
-  const token = tokens.get(personId)
-  if (!token) return false
-  busy.value = true
-  try {
-    await run(token)
-    trips.value = await props.store.loadTrips()
-    if (ok) say(ok)
-    return true
-  } catch (e) {
-    say((e as Error).message, true)
-    return false
-  } finally {
-    busy.value = false
-  }
+async function tripAction(run: () => Promise<unknown>, ok?: string) {
+  const done = Boolean(await act(run, ok))
+  if (done) await refresh()
+  return done
 }
 
-async function createTrip(personId: string, draft: TripDraft) {
-  const done = await tripAction((t) => props.store.createTrip(personId, t, draft), personId, 'Suggested. The group can answer now.')
-  if (done) {
+async function createTrip(_personId: string, draft: TripDraft) {
+  const id = crewId.value
+  if (!id) return
+  if (await tripAction(() => props.store.createTrip(id, draft), 'Suggested. The crew can answer now.')) {
     tripRange.value = null
     tripsPicked.value = 'answer'
   }
 }
-const respond = (tripId: string, personId: string, answer: Answer) =>
-  tripAction((t) => props.store.respond(tripId, personId, t, answer), personId)
-const setStatus = (tripId: string, personId: string, status: TripStatus) =>
-  tripAction(
-    (t) => props.store.setTripStatus(tripId, personId, t, status),
-    personId,
-    status === 'on' ? "It's on! Everyone can see it." : undefined,
-  )
+const respond = (tripId: string, _personId: string, answer: Answer) => tripAction(() => props.store.respond(tripId, answer))
+const setStatus = (tripId: string, _personId: string, status: TripStatus) =>
+  tripAction(() => props.store.setTripStatus(tripId, status), status === 'on' ? "It's on! Everyone can see it." : undefined)
 
 function useResort(id: string) {
   pickResort(id)
@@ -231,46 +376,56 @@ const onVisible = () => {
   refresh()
   refreshForecast()
 }
+const onHash = () => {
+  const code = parseInvite(location.hash)
+  if (!code || !session.value) return
+  history.replaceState(null, '', location.pathname + location.search)
+  openInvite(code)
+}
 
 onMounted(async () => {
-  const claim = parseClaim(location.hash)
-  if (claim) {
-    tokens.set(claim.id, claim.token)
-    tokenVersion.value++
-    history.replaceState(null, '', location.pathname + location.search)
-  }
-  await refresh()
-  if (claim) {
-    const p = people.value.find((x) => x.id === claim.id)
-    say(p ? `You can edit ${p.emoji} ${p.name} on this device now.` : 'That edit link is for a row that no longer exists.', !p)
-  }
-  const start = todayLocal() > SEASON.start && todayLocal() <= SEASON.end ? todayLocal() : SEASON.start
-  timeline.value?.scrollToDay(start, false)
-  poll = setInterval(refresh, 30_000)
   refreshForecast()
   weatherPoll = setInterval(refreshForecast, 30 * 60_000)
+  await start()
+  poll = setInterval(refresh, 30_000)
   document.addEventListener('visibilitychange', onVisible)
+  window.addEventListener('hashchange', onHash)
 })
 onBeforeUnmount(() => {
   clearInterval(poll)
   clearInterval(weatherPoll)
   document.removeEventListener('visibilitychange', onVisible)
+  window.removeEventListener('hashchange', onHash)
 })
 </script>
 
 <template>
   <div class="shell">
     <header class="topbar">
-      <svg class="topbar-range" viewBox="0 0 1440 64" preserveAspectRatio="none" aria-hidden="true">
-        <circle class="sun" cx="1190" cy="30" r="17" />
-        <path class="far" d="M0 64V44l120-16 90 10 150-28 110 20 80-10 140 24 120-20 110 12 170-30 120 22 90-8 140 18V64Z" />
-        <path class="near" d="M0 64V54l160-16 140 14 120-10 160 18 140-14 170 12 130-18 190 16 130-6V64Z" />
-      </svg>
-      <div class="brand">
-        <h1>Snow Window</h1>
-        <p class="tagline">When can the crew ski? Dec 2026 – Apr 2027</p>
+      <div class="masthead">
+        <picture class="mountain-print">
+          <source media="(max-width: 512px)" :srcset="art + 'spanish-mountains@512.png'" />
+          <img :src="art + 'spanish-mountains.png'" alt="" />
+        </picture>
+        <div class="brand">
+          <h1><img :src="art + 'logo-wordmark@512.png'" :srcset="art + 'logo-wordmark@512.png 512w, ' + art + 'logo-wordmark.png 2048w'" sizes="(max-width: 760px) 230px, 350px" alt="Snow Window" /></h1>
+          <p class="tagline">December 2026 – April 2027</p>
+        </div>
+        <div v-if="session && profile" class="account-bar">
+          <label v-if="crews.length" class="crew-switch">
+            <span class="visually-hidden">Crew</span>
+            <select :value="crewId ?? ''" @change="onCrewSelect">
+              <option v-for="c in crews" :key="c.id" :value="c.id">{{ c.name }}</option>
+              <option value="+new">+ New crew</option>
+            </select>
+          </label>
+          <button type="button" class="me-button" :aria-label="`You: ${profile.name}`" @click="accountOpen = true">
+            <span class="avatar">{{ profile.emoji }}</span>
+            <span v-if="session.guest" class="me-guest">Guest</span>
+          </button>
+        </div>
       </div>
-      <div class="tabs" role="tablist" aria-label="Views" @keydown="onTabKey">
+      <div v-if="crew && !welcome" class="tabs" role="tablist" aria-label="Views" @keydown="onTabKey">
         <button
           v-for="t in TABS"
           :id="`tab-${t.id}`"
@@ -292,11 +447,39 @@ onBeforeUnmount(() => {
     </header>
 
     <main class="stage">
+      <section v-if="startError" class="welcome">
+        <div class="welcome-card">
+          <h2>Couldn't start</h2>
+          <p class="welcome-lead">{{ startError }}</p>
+          <div class="welcome-actions"><button type="button" class="primary" @click="start">Try again</button></div>
+        </div>
+      </section>
+
+      <p v-else-if="!session" class="loading">Loading…</p>
+
+      <WelcomeCard
+        v-else-if="welcome"
+        :key="preview?.id ?? 'new'"
+        :profile="profile"
+        :preview="preview"
+        :bad-invite="badInvite"
+        :can-cancel="Boolean(crew)"
+        :busy="busy"
+        @create="createCrew"
+        @join="joinCrew"
+        @cancel="cancelWelcome"
+        @account="accountOpen = true"
+      />
+
+      <template v-else-if="crew">
       <!-- Board: kept mounted so the timeline keeps its scroll position -->
       <section v-show="tab === 'board'" id="panel-board" class="panel board-panel" role="tabpanel" aria-labelledby="tab-board">
         <div class="board">
           <div class="board-top">
-            <div class="legend">
+            <h2 class="board-title">Availability board</h2>
+            <details class="board-key">
+              <summary>Calendar key</summary>
+              <div class="legend">
               <span><i class="sw sw-weekend" /> Weekend</span>
               <span><i class="sw sw-holiday" /> Holiday</span>
               <span v-for="k in KEY_DATES" :key="k.name"><i class="sw sw-key" /> {{ k.name }}</span>
@@ -304,6 +487,7 @@ onBeforeUnmount(() => {
               <span><i class="sw sw-fresh" /> Fresh snow</span>
               <span><i class="sw sw-all" /> Everyone free</span>
             </div>
+            </details>
             <span v-if="store.kind === 'local'" class="demo">Demo: saved in this browser only</span>
           </div>
           <AvailabilityTimeline
@@ -319,22 +503,16 @@ onBeforeUnmount(() => {
             @resort="pickResort"
             @change="change"
             @focus="(d) => (focused = d)"
-            @manage="(id) => (managing = managing === id ? null : id)"
+            @manage="accountOpen = true"
           />
         </div>
 
         <aside class="side" aria-label="Details">
-          <AddPerson :full="people.length >= MAX_PEOPLE" :busy="busy" @add="add" />
-
-          <section v-if="managed" class="manage-panel" :aria-label="`Options for ${managed.name}`">
-            <div class="manage-who">
-              <span class="avatar">{{ managed.emoji }}</span>
-              <strong>{{ managed.name }}</strong>
-              <button type="button" class="ghost icon-only" aria-label="Close" @click="managing = null"><AppIcon name="close" /></button>
-            </div>
-            <button type="button" class="ghost" @click="copyLink(managed)">Copy edit link for another device</button>
-            <button type="button" class="ghost danger" @click="remove(managed)">Remove my row</button>
-          </section>
+          <p v-if="session.guest" class="guest-note">
+            You're a guest on this device.
+            <button type="button" class="link-button" @click="accountOpen = true">Save your account</button>
+            to keep your crews.
+          </p>
 
           <section v-if="focusInfo" class="day-card" aria-live="polite">
             <h2>{{ formatLong(focusInfo.day) }}</h2>
@@ -343,8 +521,7 @@ onBeforeUnmount(() => {
               <span v-if="focusInfo.mark.keyDate" class="tag key-tag">{{ focusInfo.mark.keyDate }}</span>
               <span v-if="focusInfo.mark.weekend" class="tag weekend-tag">Weekend</span>
             </p>
-            <p v-if="!people.length">No one on the board yet.</p>
-            <p v-else>
+            <p>
               <strong>{{ focusInfo.free.length }} of {{ people.length }}</strong> free<span v-if="focusInfo.free.length">:</span>
               <span v-for="p in focusInfo.free" :key="p.id" class="who">{{ p.emoji }} {{ p.name }}</span>
             </p>
@@ -358,18 +535,30 @@ onBeforeUnmount(() => {
             </ul>
             <p v-else class="muted-note">No forecast yet: forecasts reach 16 days ahead.</p>
           </section>
-          <section v-else class="how">
+
+          <CrewPanel
+            :crew="crew"
+            :people="people"
+            :me="me"
+            :busy="busy"
+            @rename="renameCrew"
+            @copy="copyInvite"
+            @reset="resetInvite"
+            @remove="removeMember"
+            @leave="leaveCrew"
+          />
+
+          <section v-if="!focusInfo" class="how">
             <h2>How it works</h2>
             <ol>
-              <li>Add yourself with a name and an emoji.</li>
-              <li>Tap a day in your row, or drag across a stretch, to mark when you're free.</li>
-              <li>Orange days are when everyone's free. <em>Snow windows</em> lists the best stretches.</li>
+              <li>Tap a day in your row, or drag across a stretch, to mark when you're free. Your days are the same in every crew.</li>
+              <li>Copy the invite link and send it to the crew.</li>
+              <li>Look for a check in the Whole crew row when everyone who has marked days is free. <em>Snow windows</em> lists the best stretches.</li>
               <li>Tap any day for who's free and the snow forecast.</li>
             </ol>
           </section>
         </aside>
       </section>
-
       <section v-if="tab === 'windows'" id="panel-windows" class="panel split" role="tabpanel" aria-labelledby="tab-windows">
         <BestWindows :counts="counts" :people="marked" :waiting="people.length - marked" @pick="pickWindow" @suggest="suggestFrom" />
         <section class="holidays">
@@ -417,10 +606,24 @@ onBeforeUnmount(() => {
         <p class="credits">
           Weather from <a href="https://open-meteo.com/" rel="noopener" target="_blank">Open-Meteo</a>, 16 days ahead, refreshed every 30 minutes.
           Webcams open on each resort's own site.
-          No sign-in: anyone with the link can add a row; only the device that made a row can change it. Up to {{ MAX_PEOPLE }} people.
+          Crews hold up to {{ MAX_PEOPLE }} people; anyone with a crew's invite link can join it.
         </p>
       </section>
+      </template>
     </main>
+
+    <AccountDialog
+      v-if="session"
+      :open="accountOpen"
+      :session="session"
+      :profile="profile"
+      :busy="busy"
+      @close="accountOpen = false"
+      @profile="saveProfile"
+      @save="saveAccount"
+      @sign-in="signIn"
+      @sign-out="signOut"
+    />
 
     <div v-if="toast" class="toast" :class="{ error: toast.error }" role="status">{{ toast.text }}</div>
   </div>

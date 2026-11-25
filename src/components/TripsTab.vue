@@ -146,7 +146,7 @@ const waiting = computed(
         />
         <section v-else class="how">
           <h2>Suggest a trip</h2>
-          <p>Add yourself on the Board first: trips are suggested, and answered, from your row.</p>
+          <p>Pick a name and an avatar first: trips are suggested, and answered, as you.</p>
         </section>
       </aside>
     </div>

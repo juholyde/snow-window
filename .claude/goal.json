@@ -40,14 +40,14 @@
     },
     {
       "id": "t2",
-      "title": "Register snow_window in the Supabase sandbox (APP.md, anon-RPC exception) and push the migration",
+      "title": "Register snow_window in the Supabase sandbox (APP.md: anonymous sign-in allowed, join_mode open) and push the migration",
       "kind": "build",
       "status": "todo",
       "importance": 5,
       "size": "S",
       "milestone": "m1",
-      "why": "The shared board needs the database; the sandbox needs to document the first no-sign-in app.",
-      "doneWhen": "apps/snow_window/APP.md merged in supabase-sandbox with the no-auth exception under Documented exceptions; Juho pushed the migration and added app_snow_window to exposed schemas.",
+      "why": "The shared crews need the database. Spec: docs/spec/auth-and-crews.md.",
+      "doneWhen": "apps/snow_window/APP.md merged in supabase-sandbox (allow_anonymous, join_mode open, no anon-RPC exception any more); Juho pushed 20261125160000_app_snow_window__init.sql and exposed app_snow_window.",
       "dependsOn": [
         "t1"
       ]
@@ -84,12 +84,12 @@
       "id": "t5",
       "title": "Decide: what stops a stranger from vandalising rows (only 20 places, no sign-in)",
       "kind": "clarify",
-      "status": "todo",
+      "status": "done",
       "importance": 3,
       "size": "S",
       "milestone": "m1",
       "why": "Anyone with the link can fill all 20 places; tokens protect existing rows but not the slots.",
-      "doneWhen": "Juho picked: keep as is, add a shared group passcode, or sign-in.",
+      "doneWhen": "Answered 2026-11-25 by sign-in plus crews: every visitor is an (anonymous) account, a crew is only reachable by its invite link, the owner can remove members and reset the link.",
       "dependsOn": []
     },
     {
@@ -203,9 +203,37 @@
       "dependsOn": [
         "t12"
       ]
+    },
+    {
+      "id": "t14",
+      "title": "Crews and guest-first sign-in: create a crew, invite link, many crews per person, one calendar per person",
+      "kind": "build",
+      "status": "done",
+      "importance": 5,
+      "size": "M",
+      "milestone": "m1",
+      "why": "Juho asked 2026-11-25 for an auth path and named crews collecting people, joined by invite link.",
+      "doneWhen": "Migration + 6 PGlite tests, CrewStore (Local + Supabase), welcome/join card, crew panel, crew switcher, account dialog; verified in the browser on LocalStore 2026-11-25. Not yet committed: shares App.vue/style.css with Codex's in-flight art edits.",
+      "dependsOn": [
+        "t11"
+      ]
+    },
+    {
+      "id": "t15",
+      "title": "Decide: allow saving a guest account with Google (needs enable_manual_linking for the whole sandbox)",
+      "kind": "clarify",
+      "status": "todo",
+      "importance": 2,
+      "size": "S",
+      "milestone": "m1",
+      "why": "Email-only save works today; Google linking is a project-wide Supabase auth setting that affects every sandbox app.",
+      "doneWhen": "Juho chose yes (setting turned on, Google button added) or no (spec notes email only).",
+      "dependsOn": [
+        "t2"
+      ]
     }
   ],
-  "next": "t14",
+  "next": "t2",
   "questions": [
     {
       "question": "Season range",

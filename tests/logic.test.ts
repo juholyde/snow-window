@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { countByDay, findWindows, markDay, type Person, stretchPicks } from '../src/lib/overlap'
 import { cleanDays } from '../src/lib/rules'
 import { modeFor, paint, span, tapRange } from '../src/lib/selection'
-import { claimLink, LocalStore, parseClaim } from '../src/lib/store'
+import { inviteLink, LocalStore, parseInvite } from '../src/lib/store'
 
 const person = (name: string, days: string[]): Person => ({ id: name, name, emoji: '🏂', days })
 const memory = () => {
   const m = new Map<string, string>()
-  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }
+  return {
+    getItem: (k: string) => m.get(k) ?? null,
+    setItem: (k: string, v: string) => void m.set(k, v),
+    removeItem: (k: string) => void m.delete(k),
+  }
 }
 
 describe('findWindows', () => {
@@ -55,24 +59,46 @@ it('rejects days outside the season or malformed', () => {
   expect(() => cleanDays(['2027-02-30'])).toThrow(/Not a date/)
 })
 
-describe('LocalStore', () => {
-  it('needs the token to edit and stops at 20 people', async () => {
-    const store = new LocalStore(memory())
-    const { person: me, token } = await store.addPerson(' Juho ', '⛷️')
-    await store.setDays(me.id, token, ['2027-01-03', '2027-01-02'])
-    await expect(store.setDays(me.id, 'wrong', [])).rejects.toThrow(/own row/)
-    expect(await store.load()).toEqual([{ ...me, name: 'Juho', days: ['2027-01-02', '2027-01-03'] }])
-    for (let i = 0; i < 19; i++) await store.addPerson(`p${i}`, '🎿')
-    await expect(store.addPerson('extra', '🎿')).rejects.toThrow(/full/)
+describe('LocalStore crews', () => {
+  it('joins by invite up to 20 people and passes the crew on when its owner leaves', async () => {
+    const storage = memory()
+    const owner = new LocalStore(storage, 'owner')
+    await expect(owner.createCrew('Gang')).rejects.toThrow(/name and an emoji/)
+    await owner.saveProfile(' Juho ', '⛷️')
+    const crewId = await owner.createCrew('  Pyrenees   gang ')
+    const [crew] = await owner.crews()
+    expect(crew).toMatchObject({ name: 'Pyrenees gang', ownerId: 'owner', members: 1 })
+
+    const laura = new LocalStore(storage, 'laura')
+    await laura.saveProfile('Laura', '🏂')
+    await laura.joinCrew(crew?.inviteCode ?? '')
+    await laura.setDays(['2027-01-03', '2027-01-02'])
+    expect((await owner.loadCrew(crewId)).people.map((p) => [p.name, p.days])).toEqual([
+      ['Juho', []],
+      ['Laura', ['2027-01-02', '2027-01-03']],
+    ])
+    await expect(laura.renameCrew(crewId, 'Mine')).rejects.toThrow(/made the crew/)
+
+    for (let i = 0; i < 18; i++) {
+      const p = new LocalStore(storage, `p${i}`)
+      await p.saveProfile(`p${i}`, '🎿')
+      await p.joinCrew(crew?.inviteCode ?? '')
+    }
+    const late = new LocalStore(storage, 'late')
+    await late.saveProfile('Late', '🐢')
+    await expect(late.joinCrew(crew?.inviteCode ?? '')).rejects.toThrow(/full/)
+
+    await owner.leaveCrew(crewId)
+    expect((await laura.crews())[0]?.ownerId).toBe('laura')
   })
 })
 
-it('round-trips a claim link', () => {
-  const id = crypto.randomUUID()
-  const token = crypto.randomUUID()
-  const link = claimLink('https://x.test/snow-window/#old', id, token)
-  expect(parseClaim(new URL(link).hash)).toEqual({ id, token })
-  expect(parseClaim('#claim=nope')).toBeNull()
+it('round-trips an invite link', () => {
+  const code = crypto.randomUUID()
+  const link = inviteLink('https://x.test/snow-window/#old', code)
+  expect(link).toBe(`https://x.test/snow-window/#join=${code}`)
+  expect(parseInvite(new URL(link).hash)).toBe(code)
+  expect(parseInvite('#join=nope')).toBeNull()
 })
 
 it('picks trip dates by tapping a first and a last day, capped at the trip limit', () => {

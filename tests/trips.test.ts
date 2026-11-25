@@ -17,7 +17,11 @@ const draft = (over: Partial<TripDraft> = {}): TripDraft => ({
 })
 const memory = () => {
   const m = new Map<string, string>()
-  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }
+  return {
+    getItem: (k: string) => m.get(k) ?? null,
+    setItem: (k: string, v: string) => void m.set(k, v),
+    removeItem: (k: string) => void m.delete(k),
+  }
 }
 
 describe('cleanDraft', () => {
@@ -53,20 +57,28 @@ it('tallies answers with everyone else as not answered, and sorts on > open > ca
 })
 
 describe('LocalStore trips', () => {
-  it('needs your token, lets only the proposer close, and removes trips with their person', async () => {
-    const store = new LocalStore(memory())
-    const me = await store.addPerson('Juho', '🏂')
-    const laura = await store.addPerson('Laura', '⛷️')
-    const id = await store.createTrip(me.person.id, me.token, draft())
-    await expect(store.respond(id, laura.person.id, me.token, 'yes')).rejects.toThrow(/own row/)
-    await store.respond(id, laura.person.id, laura.token, 'maybe')
-    await expect(store.setTripStatus(id, laura.person.id, laura.token, 'on')).rejects.toThrow(/suggested/)
-    await store.setTripStatus(id, me.person.id, me.token, 'on')
-    expect((await store.loadTrips())[0]).toMatchObject({
-      status: 'on',
-      responses: { [me.person.id]: 'yes', [laura.person.id]: 'maybe' },
-    })
-    await store.removePerson(me.person.id, me.token)
-    expect(await store.loadTrips()).toEqual([])
+  it('lets members answer, only the proposer close, and drops a removed member\'s trips', async () => {
+    const storage = memory()
+    const me = new LocalStore(storage, 'me')
+    const laura = new LocalStore(storage, 'laura')
+    const outsider = new LocalStore(storage, 'out')
+    for (const [s, n] of [[me, 'Juho'], [laura, 'Laura'], [outsider, 'Out']] as const) await s.saveProfile(n, '🏂')
+    const crewId = await me.createCrew('Gang')
+    await laura.joinCrew((await me.crews())[0]?.inviteCode ?? '')
+
+    const mine = await me.createTrip(crewId, draft())
+    const hers = await laura.createTrip(crewId, draft({ title: 'Hers' }))
+    await laura.respond(mine, 'maybe')
+    await expect(outsider.respond(mine, 'yes')).rejects.toThrow(/not in that crew/)
+    await expect(laura.setTripStatus(mine, 'on')).rejects.toThrow(/suggested/)
+    await me.setTripStatus(mine, 'on')
+    const trips = (await me.loadCrew(crewId)).trips
+    expect(trips.find((t) => t.id === mine)).toMatchObject({ status: 'on', responses: { me: 'yes', laura: 'maybe' } })
+
+    await me.removeMember(crewId, 'laura')
+    const left = (await me.loadCrew(crewId)).trips
+    expect(left.map((t) => t.id)).toEqual([mine])
+    expect(left[0]?.responses).toEqual({ me: 'yes' })
+    expect(left.some((t) => t.id === hers)).toBe(false)
   })
 })

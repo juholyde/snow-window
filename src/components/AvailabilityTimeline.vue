@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { type Day, daysBetween, formatMonth, todayLocal } from '../lib/dates'
+import { type Day, daysBetween, formatLong, formatMonth, todayLocal } from '../lib/dates'
 import { type DayMark, markDay, type Person } from '../lib/overlap'
 import { modeFor, type PaintMode, paint, type Range, span, tapRange } from '../lib/selection'
 import { MAX_TRIP_DAYS } from '../lib/trips'
@@ -38,12 +38,12 @@ const marks = computed(() => new Map(props.days.map((d) => [d, markDay(d)] as co
 const markOf = (d: Day): DayMark => marks.value.get(d) ?? { weekend: false }
 
 const months = computed(() => {
-  const out: { label: string; span: number }[] = []
+  const out: { label: string; span: number; start: Day }[] = []
   for (const d of props.days) {
     const label = formatMonth(d)
     const last = out[out.length - 1]
     if (last?.label === label) last.span++
-    else out.push({ label, span: 1 })
+    else out.push({ label, span: 1, start: d })
   }
   return out
 })
@@ -164,13 +164,18 @@ function onUp(e: PointerEvent) {
 }
 
 const scroller = ref<HTMLElement | null>(null)
-function scrollToDay(day: Day, smooth = true) {
+function scrollToDay(day: Day, smooth = true, contextDays = 3) {
   const el = scroller.value?.querySelector<HTMLElement>(`.head-days [data-day="${day}"]`)
   const box = scroller.value
   if (!el || !box) return
   const nameCol = box.querySelector<HTMLElement>('.name')?.offsetWidth ?? 0
   const left = box.scrollLeft + el.getBoundingClientRect().left - box.getBoundingClientRect().left
-  box.scrollTo({ left: Math.max(0, left - nameCol - 3 * el.offsetWidth), behavior: smooth && !matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto" })
+  box.scrollTo({ left: Math.max(0, left - nameCol - contextDays * el.offsetWidth), behavior: smooth && !matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto" })
+}
+function jumpMonth(event: Event) {
+  const select = event.target as HTMLSelectElement
+  scrollToDay(select.value, false, 0)
+  select.selectedIndex = 0
 }
 defineExpose({ scrollToDay })
 </script>
@@ -188,7 +193,12 @@ defineExpose({ scrollToDay })
   >
     <div class="grid">
       <!-- Months -->
-      <div class="name head corner" />
+      <div class="name head corner month-jump">
+        <select aria-label="Jump to month" @change="jumpMonth">
+          <option value="" disabled selected>Go to month</option>
+          <option v-for="m in months" :key="m.start" :value="m.start">{{ m.label }}</option>
+        </select>
+      </div>
       <div class="head-months">
         <div v-for="m in months" :key="m.label" class="month" :style="{ gridColumn: `span ${m.span}` }">
           <span>{{ m.label }}</span>
@@ -205,6 +215,7 @@ defineExpose({ scrollToDay })
           :key="d"
           type="button"
           class="day-head"
+          :aria-label="formatLong(d)"
           :class="columnClass(d)"
           :data-day="d"
           :title="[markOf(d).holiday, markOf(d).keyDate].filter(Boolean).join(' · ') || undefined"

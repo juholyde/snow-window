@@ -138,6 +138,6 @@ function submit() {
       </label>
     </fieldset>
 
-    <button type="submit" class="primary" :disabled="busy || !range || !as">Suggest to the group</button>
+    <button type="submit" class="primary" :disabled="busy || !range || !as">Suggest to the crew</button>
   </form>
 </template>

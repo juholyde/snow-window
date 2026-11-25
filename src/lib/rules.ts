@@ -3,6 +3,7 @@ import { type Day, isDay } from './dates'
 
 /** Guardrails for a public board without sign-in. The migration enforces the same limits. */
 export const MAX_PEOPLE = 20
+export const MAX_CREW_NAME = 40
 export const MAX_NAME = 24
 export const MAX_EMOJI = 16
 
