@@ -124,12 +124,12 @@
       "id": "t8",
       "title": "Place the remaining Codex art (sun, tycoon skier) in the app",
       "kind": "build",
-      "status": "todo",
+      "status": "done",
       "importance": 3,
       "size": "S",
       "milestone": "m1",
       "why": "Codex's set is in public/art (85c628b). Panorama, wordmark, favicon in use; Rufus is back in the crew-of-one invite band (3114690). Sun and tycoon skier not placed yet. Raw drafts stay untracked in generated_images/.",
-      "doneWhen": "Sun and tycoon skier each have a place or Juho drops them.",
+      "doneWhen": "All Codex art placed (2026-11-25): panorama, wordmark, favicon, Rufus in the crew-of-one invite band, the sun in the masthead sky (hidden on phones), the tycoon skier in the empty Answer view. Raw drafts stay untracked in generated_images/.",
       "dependsOn": [
         "t6"
       ]

@@ -414,6 +414,7 @@ onBeforeUnmount(() => {
           <source media="(max-width: 512px)" :srcset="art + 'spanish-mountains@512.png'" />
           <img :src="art + 'spanish-mountains.png'" alt="" />
         </picture>
+        <img class="masthead-sun" :src="art + 'sun@512.png'" alt="" width="512" height="512" />
         <div class="brand">
           <h1><img :src="art + 'logo-wordmark@512.png'" :srcset="art + 'logo-wordmark@512.png 512w, ' + art + 'logo-wordmark.png 2048w'" sizes="(max-width: 760px) 230px, 350px" alt="Snow Window" /></h1>
           <p class="tagline">December 2026 – April 2027</p>

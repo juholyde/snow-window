@@ -47,6 +47,7 @@ watch(
 
 // Best stretches as one-tap picks under the timeline.
 const best = computed(() => stretchPicks(SEASON, props.counts, props.people.filter((p) => p.days.length).length))
+const art = `${import.meta.env.BASE_URL}art/`
 const label = (r: Range) => (r.start === r.end ? formatLong(r.start) : `${formatLong(r.start)} – ${formatLong(r.end)}`)
 function pickBest(start: Day, end: Day) {
   const r = span(start, end, MAX_TRIP_DAYS)
@@ -152,10 +153,16 @@ const waiting = computed(
     </div>
 
     <section v-else class="answer-view" aria-label="Suggested trips">
-      <p v-if="!visible.length" class="empty">
-        No trips yet. <button type="button" class="link-btn" @click="emit('view', 'suggest')">Suggest one</button>
-        from the timeline, or from <em>Snow windows</em>.
-      </p>
+      <div v-if="!visible.length" class="empty empty-trips">
+        <img :src="art + 'tycoon-skier@512.png'" alt="" width="150" height="150" />
+        <div>
+          <h3>No trips yet</h3>
+          <p>
+            <button type="button" class="link-btn" @click="emit('view', 'suggest')">Suggest one</button>
+            from the timeline, or from <em>Snow windows</em>. Everyone answers Going, Maybe or Can't here.
+          </p>
+        </div>
+      </div>
       <TripCard
         v-for="t in visible"
         :key="t.id"
