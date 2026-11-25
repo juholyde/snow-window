@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import type { Day } from '../lib/dates'
-import type { Person } from '../lib/overlap'
-import type { Range } from '../lib/selection'
-import { type Answer, sortTrips, type Trip, type TripDraft, type TripStatus } from '../lib/trips'
+import { SEASON } from '../config/calendar'
+import { type Day, formatLong } from '../lib/dates'
+import { type Person, stretchPicks } from '../lib/overlap'
+import { type Range, span } from '../lib/selection'
+import { type Answer, MAX_TRIP_DAYS, sortTrips, type Trip, type TripDraft, type TripStatus } from '../lib/trips'
 import type { Forecasts } from '../lib/weather'
 import AvailabilityTimeline from './AvailabilityTimeline.vue'
 import TripCard from './TripCard.vue'
@@ -43,6 +44,15 @@ watch(
   },
   { immediate: true },
 )
+
+// Best stretches as one-tap picks under the timeline.
+const best = computed(() => stretchPicks(SEASON, props.counts, props.people.filter((p) => p.days.length).length))
+const label = (r: Range) => (r.start === r.end ? formatLong(r.start) : `${formatLong(r.start)} – ${formatLong(r.end)}`)
+function pickBest(start: Day, end: Day) {
+  const r = span(start, end, MAX_TRIP_DAYS)
+  emit('range', r)
+  timeline.value?.scrollToDay(r.start)
+}
 
 // The suggestion's resort drives the forecast row on its timeline.
 const resort = ref(props.resortId)
@@ -100,6 +110,27 @@ const waiting = computed(
           @resort="(id) => (resort = id)"
           @pick="(r) => emit('range', r)"
         />
+        <div class="suggest-legend">
+          <span><i class="sw sw-option" /> Someone's free</span>
+          <span><i class="sw sw-fresh" /> Everyone's free</span>
+          <span><i class="sw sw-picked" /> Your pick</span>
+        </div>
+        <section v-if="best.length" class="best-picks" aria-label="Best stretches">
+          <h3>Best stretches <small>most people free first</small></h3>
+          <div class="picks">
+            <button
+              v-for="w in best"
+              :key="w.start"
+              type="button"
+              class="pick"
+              :class="{ on: range?.start === w.start && range?.end === span(w.start, w.end, MAX_TRIP_DAYS).end }"
+              @click="pickBest(w.start, w.end)"
+            >
+              <strong>{{ label(w) }}</strong>
+              <small>{{ w.people }} free · {{ w.length === 1 ? '1 day' : `${w.length} days` }}</small>
+            </button>
+          </div>
+        </section>
       </div>
       <aside class="side">
         <TripForm

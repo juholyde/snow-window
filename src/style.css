@@ -317,12 +317,36 @@ body { overflow: hidden; }
 .trips-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
 .trips-bar .seg > button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; font-size: 15px; }
 .trips-bar .tab-count { display: inline-block; }
-.suggest-view { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 26vw, 360px); gap: 14px; }
+.suggest-view { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 26vw, 360px); align-items: start; gap: 14px; }
+.suggest-view > .board { max-height: 100%; }
+.suggest-view > .side { max-height: 100%; }
+.suggest-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 8px 12px; border-top: 1px solid var(--snow-3); font-size: 12px; color: var(--ink-2); }
+.suggest-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw-option { background: var(--glacier-wash); box-shadow: inset 0 0 0 1px var(--glacier-soft); }
+.sw-picked { background: var(--orange); }
+.best-picks { padding: 10px 12px 12px; border-top: 1px solid var(--snow-3); }
+.best-picks h3 { margin: 0 0 8px; font-size: 13px; font-weight: 800; }
+.best-picks h3 small { font-weight: 500; color: var(--ink-2); }
+.picks { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 6px 10px; border: 1px solid var(--snow-3); border-radius: 8px; background: var(--snow-0); font-size: 13px; text-align: left; }
+.pick:hover { border-color: var(--orange); }
+.pick small { font-size: 11px; color: var(--ink-2); }
+.pick.on { background: var(--orange-wash); border-color: var(--orange); }
 .answer-view { flex: 1; min-height: 0; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 540px), 1fr)); align-content: start; gap: 12px; }
 .link-btn { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--orange-deep); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 .timeline.picking .cell, .timeline.picking .day-head { cursor: pointer; }
-.timeline.picking .row .cell:hover { box-shadow: inset 0 0 0 2px var(--orange); }
+.pick-name { background: var(--orange-wash); }
+.pick-name, .pick-row .cell { height: 60px; }
+.pick-cell { position: relative; cursor: pointer; touch-action: pan-x; }
+.pick-cell .slot { position: absolute; inset: 12px 3px; border-radius: 8px; transition: background-color 120ms ease-out; }
+.pick-cell.option .slot { background: var(--glacier-wash); box-shadow: inset 0 0 0 1px var(--glacier-soft); }
+.pick-cell.best .slot { background: var(--orange-wash); box-shadow: inset 0 0 0 1.5px var(--orange); }
+.pick-cell:hover .slot { box-shadow: inset 0 0 0 2px var(--orange-deep); }
+.pick-cell.picked .slot { left: 0; right: 0; border-radius: 0; background: var(--orange); box-shadow: none; }
+.pick-cell.picked.pstart .slot { left: 3px; border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+.pick-cell.picked.pend .slot { right: 3px; border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+.timeline.picking .overlap-row .cell:hover { box-shadow: inset 0 0 0 2px var(--orange); }
 .timeline.picking .overlap-cell.lit { box-shadow: inset 0 0 0 2px var(--orange-deep); }
 
 .pick-summary { display: flex; align-items: center; gap: 12px; }
@@ -478,8 +502,11 @@ body { overflow: hidden; }
   .split > section { overflow: visible; }
   .tab-count { display: none; }
   .window-row { flex-direction: column; }
-  .suggest-view { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; gap: 8px; }
-  .suggest-view .side { max-height: 46dvh; }
+  .suggest-view { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); align-items: stretch; gap: 8px; }
+  .suggest-view > .side { overflow: auto; }
+  .best-picks .picks { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .best-picks .pick { flex: none; }
+  .suggest-legend { display: none; }
   .trip { grid-template-columns: 1fr; }
   .trip-photo { height: 110px; }
   .seg.answer { max-width: none; }

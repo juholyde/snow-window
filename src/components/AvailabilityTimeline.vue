@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { type Day, formatMonth, todayLocal } from '../lib/dates'
+import { type Day, daysBetween, formatMonth, todayLocal } from '../lib/dates'
 import { type DayMark, markDay, type Person } from '../lib/overlap'
 import { modeFor, type PaintMode, paint, type Range, span, tapRange } from '../lib/selection'
 import { MAX_TRIP_DAYS } from '../lib/trips'
@@ -95,6 +95,24 @@ const lit = computed<Range | null>(() => {
   return p && !p.touch && p.anchor !== p.current ? span(p.anchor, p.current, MAX_TRIP_DAYS) : props.highlight
 })
 
+const pickLabel = computed(() => {
+  const r = lit.value
+  if (!r) return 'Tap first day, then last'
+  const n = daysBetween(r.start, r.end)
+  return n === 0 ? '1 day' : `${n} ${n === 1 ? 'night' : 'nights'}`
+})
+function slotClass(d: Day) {
+  const r = lit.value
+  const picked = r !== null && d >= r.start && d <= r.end
+  return {
+    option: (props.counts.get(d) ?? 0) > 0,
+    best: heat(d) === 'all',
+    picked,
+    pstart: picked && d === r?.start,
+    pend: picked && d === r?.end,
+  }
+}
+
 function onPickDown(e: PointerEvent) {
   if (!picking.value || e.button !== 0) return
   const day = dayAt(e)
@@ -179,7 +197,7 @@ defineExpose({ scrollToDay })
 
       <!-- Days -->
       <div class="name head corner corner-low">
-        <span class="hint">{{ picking ? 'Tap first day, then last' : 'Tap a day for details' }}</span>
+        <span class="hint">{{ picking ? 'Pick days in the New trip row' : 'Tap a day for details' }}</span>
       </div>
       <div class="head-days">
         <button
@@ -251,8 +269,31 @@ defineExpose({ scrollToDay })
         </button>
       </div>
 
+      <!-- Picking: one row for the trip being suggested, with the days people are free as options -->
+      <template v-if="picking">
+        <div class="name pick-name">
+          <span class="avatar">🎿</span>
+          <span class="label">
+            <strong>New trip</strong>
+            <small>{{ pickLabel }}</small>
+          </span>
+        </div>
+        <div class="row pick-row">
+          <div
+            v-for="d in days"
+            :key="d"
+            class="cell pick-cell"
+            :class="[columnClass(d), slotClass(d)]"
+            :data-day="d"
+            :title="`${counts.get(d) ?? 0} of ${total} free`"
+          >
+            <span class="slot" />
+          </div>
+        </div>
+      </template>
+
       <!-- People -->
-      <template v-for="p in people" :key="p.id">
+      <template v-for="p in picking ? [] : people" :key="p.id">
         <div class="name person-name" :class="{ mine: editable.has(p.id) }">
           <span class="avatar">{{ p.emoji }}</span>
           <span class="label">

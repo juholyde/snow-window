@@ -2,21 +2,12 @@
 import { computed } from 'vue'
 import { SEASON } from '../config/calendar'
 import { type Day, formatLong } from '../lib/dates'
-import { findWindows, type TripWindow } from '../lib/overlap'
+import { bestWindows, type TripWindow } from '../lib/overlap'
 
 const props = defineProps<{ counts: Map<Day, number>; people: number; waiting: number }>()
 const emit = defineEmits<{ pick: [w: TripWindow]; suggest: [w: TripWindow] }>()
 
-/** Everyone if that finds anything, else the most people any day has. */
-const result = computed(() => {
-  if (props.people < 2) return { need: 0, windows: [] as TripWindow[] }
-  const most = Math.max(0, ...props.counts.values())
-  for (let need = props.people; need >= Math.max(2, most); need--) {
-    const windows = findWindows(SEASON, props.counts, need)
-    if (windows.length) return { need, windows: windows.slice(0, 8) }
-  }
-  return { need: 0, windows: [] as TripWindow[] }
-})
+const result = computed(() => bestWindows(SEASON, props.counts, props.people))
 
 function range(w: TripWindow) {
   return w.length === 1 ? formatLong(w.start) : `${formatLong(w.start)} – ${formatLong(w.end)}`

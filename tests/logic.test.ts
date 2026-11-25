@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { countByDay, findWindows, markDay, type Person } from '../src/lib/overlap'
+import { countByDay, findWindows, markDay, type Person, stretchPicks } from '../src/lib/overlap'
 import { cleanDays } from '../src/lib/rules'
 import { modeFor, paint, span, tapRange } from '../src/lib/selection'
 import { claimLink, LocalStore, parseClaim } from '../src/lib/store'
@@ -84,4 +84,16 @@ it('picks trip dates by tapping a first and a last day, capped at the trip limit
   expect(tapRange({ start: '2027-01-10', end: '2027-01-12' }, '2027-01-20', 14).end).toBe('2027-01-20')
   expect(tapRange(one, '2027-03-01', 14)).toEqual({ start: '2027-01-10', end: '2027-01-23' })
   expect(span('2027-01-05', '2027-01-02', 14)).toEqual({ start: '2027-01-02', end: '2027-01-05' })
+})
+
+it('offers stretch picks with the most people free first and never overlapping', () => {
+  const season = { start: '2027-01-01', end: '2027-01-31' }
+  const counts = new Map([
+    ['2027-01-02', 3], ['2027-01-03', 2], ['2027-01-04', 2], ['2027-01-10', 2], ['2027-01-20', 1],
+  ])
+  const picks = stretchPicks(season, counts, 3)
+  expect(picks.map((w) => [w.start, w.end, w.people])).toEqual([
+    ['2027-01-02', '2027-01-02', 3],
+    ['2027-01-10', '2027-01-10', 2],
+  ])
 })
