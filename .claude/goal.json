@@ -230,7 +230,8 @@
       "doneWhen": "A guest on the live site saves with Google and keeps their crews; sandbox config has enable_manual_linking = true.",
       "dependsOn": [
         "t2"
-      ]
+      ],
+      "note": "2026-11-26: app live (b317a5f), sandbox enable_manual_linking pushed and verified by config diff. Left: Juho tries Save with Google once on the live site; merge sandbox branch app/snow-window-google."
     },
     {
       "id": "t16",
