@@ -222,7 +222,7 @@
       "id": "t15",
       "title": "Save and sign in with Google (Juho chose yes 2026-11-25; needs enable_manual_linking in the sandbox)",
       "kind": "build",
-      "status": "doing",
+      "status": "done",
       "importance": 2,
       "size": "S",
       "milestone": "m1",
@@ -231,7 +231,7 @@
       "dependsOn": [
         "t2"
       ],
-      "note": "2026-11-26: app live (b317a5f), sandbox enable_manual_linking pushed and verified by config diff. Left: Juho tries Save with Google once on the live site; merge sandbox branch app/snow-window-google."
+      "note": "2026-11-26: live (b317a5f), sandbox manual linking pushed + merged (c77a22e). Juho's Save with Google returned identity_already_exists (his Google is already a sandbox user), which proves linking is on. Not yet seen: a Google account new to the sandbox linking to a guest and keeping crews; check the first time a friend saves."
     },
     {
       "id": "t16",
@@ -248,7 +248,7 @@
       ]
     }
   ],
-  "next": "t15",
+  "next": "t13",
   "questions": [
     {
       "question": "Season range",
