@@ -3,7 +3,7 @@ import type { Day } from './dates'
 import type { Person } from './overlap'
 import { cleanDays, cleanEmoji, cleanName } from './rules'
 import { type Crew, type CrewBoard, type CrewPreview, type CrewStore, cleanCrewName, ERROR_COPY, type Session, storeError } from './store'
-import { type Answer, cleanDraft, type TripDraft, type TripStatus } from './trips'
+import { type Answer, cleanBudget, cleanDraft, cleanStay, type StayDraft, type TripDraft, type TripStatus } from './trips'
 
 const APP = 'snow_window'
 
@@ -105,12 +105,17 @@ export class SupabaseStore implements CrewStore {
       p_end: d.end,
       p_title: d.title,
       p_note: d.note,
-      p_stay_url: d.stayUrl,
-      p_stay_price: d.stayPrice,
-      p_stay_note: d.stayNote,
     })
   }
   respond = (tripId: string, answer: Answer) => this.call<void>('respond', { p_trip: tripId, p_answer: answer })
   setTripStatus = (tripId: string, status: TripStatus) =>
     this.call<void>('set_trip_status', { p_trip: tripId, p_status: status })
+
+  setStayPrefs = (tripId: string, budget: number | null, driving: boolean | null) =>
+    this.call<void>('set_stay_prefs', { p_trip: tripId, p_budget: cleanBudget(budget), p_driving: driving })
+  addStays = (tripId: string, stays: StayDraft[]) =>
+    this.call<void>('add_stays', { p_trip: tripId, p_stays: stays.map(cleanStay) })
+  removeStay = (stayId: string) => this.call<void>('remove_stay', { p_stay: stayId })
+  voteStay = (stayId: string, vote: boolean) => this.call<void>('vote_stay', { p_stay: stayId, p_vote: vote })
+  bookStay = (tripId: string, stayId: string | null) => this.call<void>('book_stay', { p_trip: tripId, p_stay: stayId })
 }

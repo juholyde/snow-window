@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Person } from '../src/lib/overlap'
 import { LocalStore } from '../src/lib/store'
-import { cleanDraft, coverage, sortTrips, type Trip, type TripDraft, tally } from '../src/lib/trips'
+import { cleanDraft, coverage, parseStays, sortTrips, stayPrompt, type Trip, type TripDraft, tally } from '../src/lib/trips'
 
 const person = (id: string, days: string[]): Person => ({ id, name: id, emoji: '🏂', days })
 const draft = (over: Partial<TripDraft> = {}): TripDraft => ({
@@ -10,9 +10,6 @@ const draft = (over: Partial<TripDraft> = {}): TripDraft => ({
   end: '2027-03-29',
   title: '',
   note: '',
-  stayUrl: 'https://example.com/flat',
-  stayPrice: 45,
-  stayNote: '',
   ...over,
 })
 const memory = () => {
@@ -24,10 +21,46 @@ const memory = () => {
   }
 }
 
+const trip = (over: Partial<Trip> = {}): Trip => ({
+  id: 't', proposerId: 'a', resortId: 'cerler', start: '2027-01-02', end: '2027-01-02', title: null, note: null,
+  status: 'open', createdAt: '0', responses: {}, stayBudget: null, driving: null, stays: [], bookedStay: null, ...over,
+})
+
+describe('stay prompt and paste', () => {
+  it('asks for STAY lines with the trip, crew and wishes in it', () => {
+    const t = trip({ resortId: 'baqueira', start: '2027-01-08', end: '2027-01-10', note: 'sauna please',
+      stayBudget: 50, driving: false, responses: { a: 'yes', b: 'maybe', c: 'no' } })
+    const prompt = stayPrompt(t, [person('a', []), person('b', []), person('c', [])])
+    expect(prompt).toContain('Baqueira')
+    expect(prompt).toContain('2 nights')
+    expect(prompt).toContain('2 people')
+    expect(prompt).toContain('€50')
+    expect(prompt).toContain('No car')
+    expect(prompt).toContain('sauna please')
+    expect(prompt).toContain('STAY | name |')
+  })
+
+  it('reads STAY lines out of a chatty answer, tolerating markdown, € signs and decimal commas', () => {
+    const answer = [
+      'Here are three options:',
+      '```',
+      'STAY | Hotel Tuca | https://example.com/tuca | €62,50 | Ski-in, ski-out',
+      '- stay | Flat in Vielha | [book](https://example.com/vielha) | 38 | Cheap, 15 min drive | sleeps 6',
+      'STAY | Refugi | no link | ? |',
+      '```',
+      'Enjoy!',
+    ].join('\n')
+    expect(parseStays(answer)).toEqual([
+      { name: 'Hotel Tuca', url: 'https://example.com/tuca', price: 63, why: 'Ski-in, ski-out' },
+      { name: 'Flat in Vielha', url: 'https://example.com/vielha', price: 38, why: 'Cheap, 15 min drive | sleeps 6' },
+      { name: 'Refugi', url: null, price: null, why: null },
+    ])
+    expect(() => parseStays('Sorry, I cannot browse.')).toThrow(/STAY/)
+  })
+})
+
 describe('cleanDraft', () => {
-  it('drops the stay on a day trip and refuses what the database would', () => {
-    expect(cleanDraft(draft({ end: '2027-03-26' }))).toMatchObject({ stayUrl: '', stayPrice: null })
-    expect(() => cleanDraft(draft({ stayUrl: 'javascript:alert(1)' }))).toThrow(/https/)
+  it('refuses what the database would', () => {
     expect(() => cleanDraft(draft({ end: '2027-04-20' }))).toThrow(/at most/)
     expect(() => cleanDraft(draft({ end: '2027-03-20' }))).toThrow(/before/)
     expect(() => cleanDraft(draft({ resortId: 'nowhere' }))).toThrow(/resort/)
@@ -46,8 +79,7 @@ it('splits people into free for the whole trip and missing some of it, ignoring 
 
 it('tallies answers with everyone else as not answered, and sorts on > open > cancelled', () => {
   const t = (id: string, status: Trip['status'], createdAt: string): Trip => ({
-    id, proposerId: 'a', resortId: 'cerler', start: '2027-01-02', end: '2027-01-02', title: null, note: null,
-    stayUrl: null, stayPrice: null, stayNote: null, status, createdAt, responses: { a: 'yes', b: 'no' },
+    ...trip(), id, status, createdAt, responses: { a: 'yes', b: 'no' },
   })
   const people = [person('a', []), person('b', []), person('c', [])]
   const result = tally(t('x', 'open', '1'), people)

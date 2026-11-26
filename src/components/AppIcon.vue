@@ -19,6 +19,10 @@ export type IconName =
   | 'car'
   | 'bus'
   | 'train'
+  | 'heart'
+  | 'copy'
+  | 'paste'
+  | 'chevron'
 
 withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 18 })
 </script>
@@ -101,5 +105,16 @@ withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 18 })
       <path d="M7 14.5h10.5a3.5 3.5 0 0 0 .3-7 5 5 0 0 0-9.6 1.4A2.8 2.8 0 0 0 7 14.5z" />
       <path d="M12.5 16l-2 3.5h3l-2 3" />
     </g>
+    <path v-else-if="name === 'heart'" d="M12 19.5s-7-4.3-7-9.3A4 4 0 0 1 12 8a4 4 0 0 1 7 2.2c0 5-7 9.3-7 9.3z" />
+    <g v-else-if="name === 'copy'">
+      <rect x="9" y="9" width="10" height="10" rx="2" />
+      <path d="M15 9V6a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3" />
+    </g>
+    <g v-else-if="name === 'paste'">
+      <path d="M9 5H7a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <rect x="9" y="3.5" width="6" height="3" rx="1" />
+      <path d="M9 12h6M9 15.5h4" />
+    </g>
+    <path v-else-if="name === 'chevron'" d="M7 10l5 5 5-5" />
   </svg>
 </template>

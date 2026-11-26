@@ -2,9 +2,8 @@ import { readFileSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-const migration = readFileSync(
-  new URL('../supabase/migrations/20261125160000_app_snow_window__init.sql', import.meta.url),
-  'utf8',
+const migrations = ['20261125160000_app_snow_window__init.sql', '20261126120000_app_snow_window__stays.sql'].map((f) =>
+  readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8'),
 )
 
 // Just enough of Supabase auth and the sandbox platform for the migration to run.
@@ -56,7 +55,7 @@ async function crewWith(owner: string, ...others: string[]) {
 beforeEach(async () => {
   db = new PGlite()
   await db.exec(stub)
-  await db.exec(migration)
+  for (const m of migrations) await db.exec(m)
 })
 
 describe('crews', () => {
@@ -65,7 +64,7 @@ describe('crews', () => {
     const laura = await newUser('Laura')
     const stranger = await newUser('Stranger')
     const { crew } = await crewWith(juho, laura)
-    await as(laura, 'select app_snow_window.create_trip($1, $2, $3, $4, null, null, null, null, null)', [
+    await as(laura, 'select app_snow_window.create_trip($1, $2, $3, $4, null, null)', [
       crew, 'baqueira', '2027-01-09', '2027-01-09',
     ])
 
@@ -125,15 +124,15 @@ describe('trips', () => {
     const laura = await newUser('Laura')
     const outsider = await newUser('Out')
     const { crew } = await crewWith(owner, laura)
-    const trip = await as<string>(laura, 'select app_snow_window.create_trip($1, $2, $3, $4, $5, null, $6, $7, null)', [
-      crew, 'grandvalira', '2026-12-28', '2026-12-31', 'New Year', 'https://example.com/flat', 52,
+    const trip = await as<string>(laura, 'select app_snow_window.create_trip($1, $2, $3, $4, $5, null)', [
+      crew, 'grandvalira', '2026-12-28', '2026-12-31', 'New Year',
     ])
     await as(owner, "select app_snow_window.respond($1, 'maybe')", [trip])
     await expect(as(outsider, "select app_snow_window.respond($1, 'yes')", [trip])).rejects.toThrow(/not_member/)
     await expect(as(owner, "select app_snow_window.set_trip_status($1, 'on')", [trip])).rejects.toThrow(/not_your_trip/)
 
     expect(await as(owner, 'select app_snow_window.get_crew($1)', [crew])).toMatchObject({
-      trips: [{ stayPrice: 52, responses: { [laura]: 'yes', [owner]: 'maybe' } }],
+      trips: [{ title: 'New Year', responses: { [laura]: 'yes', [owner]: 'maybe' } }],
     })
 
     await as(laura, "select app_snow_window.set_trip_status($1, 'cancelled')", [trip])
@@ -144,19 +143,55 @@ describe('trips', () => {
     expect(await as(owner, 'select app_snow_window.get_crew($1)', [crew])).toMatchObject({ trips: [] })
   })
 
-  it('stops at 40 trips per crew and keeps day trips free of a stay', async () => {
+  it('stops at 40 trips per crew', async () => {
     const owner = await newUser('Owner')
     const { crew } = await crewWith(owner)
-    const add = () =>
-      as<string>(owner, 'select app_snow_window.create_trip($1, $2, $3, $3, null, null, $4, $5, $6)', [
-        crew, 'cerler', '2027-02-01', 'https://x.example', 30, 'flat',
-      ])
-    const first = await add()
-    expect((await db.query('select stay_url, stay_price from app_snow_window.trips where id = $1', [first])).rows[0]).toEqual({
-      stay_url: null,
-      stay_price: null,
-    })
-    for (let i = 1; i < 40; i++) await add()
+    const add = () => as<string>(owner, "select app_snow_window.create_trip($1, 'cerler', '2027-02-01', '2027-02-01', null, null)", [crew])
+    for (let i = 0; i < 40; i++) await add()
     await expect(add()).rejects.toThrow(/trips_full/)
+  })
+})
+
+describe('stays', () => {
+  it('open once the trip is on: anyone adds, votes and books; only adder or proposer removes', async () => {
+    const owner = await newUser('Owner')
+    const laura = await newUser('Laura')
+    const outsider = await newUser('Out')
+    const { crew } = await crewWith(owner, laura)
+    const trip = await as<string>(owner, "select app_snow_window.create_trip($1, 'baqueira', '2027-01-08', '2027-01-10', null, null)", [crew])
+    const options = JSON.stringify([
+      { name: 'Hotel Tuca', url: 'https://example.com/tuca', price: 60, why: 'At the lift' },
+      { name: 'Flat in Vielha', url: null, price: null, why: null },
+    ])
+    await expect(as(laura, 'select app_snow_window.add_stays($1, $2)', [trip, options])).rejects.toThrow(/trip_not_on/)
+    await as(owner, "select app_snow_window.set_trip_status($1, 'on')", [trip])
+    await expect(as(outsider, 'select app_snow_window.add_stays($1, $2)', [trip, options])).rejects.toThrow(/not_member/)
+
+    await as(laura, 'select app_snow_window.add_stays($1, $2)', [trip, options])
+    await as(laura, 'select app_snow_window.set_stay_prefs($1, 50, true)', [trip])
+    const stay = async (name: string) => as<string>(owner, 'select id from app_snow_window.stays where name = $1', [name])
+    const tuca = await stay('Hotel Tuca')
+    const flat = await stay('Flat in Vielha')
+    await as(owner, 'select app_snow_window.vote_stay($1, true)', [tuca])
+    await as(laura, 'select app_snow_window.vote_stay($1, true)', [tuca])
+    await as(laura, 'select app_snow_window.vote_stay($1, false)', [tuca])
+    await as(owner, 'select app_snow_window.book_stay($1, $2)', [trip, tuca])
+    expect(await as(owner, 'select app_snow_window.get_crew($1)', [crew])).toMatchObject({
+      trips: [{ stayBudget: 50, driving: true, bookedStay: tuca, stays: [{ name: 'Hotel Tuca', price: 60, votes: [owner] }, { name: 'Flat in Vielha' }] }],
+    })
+
+    const stranger = await newUser('Stranger')
+    const code = await as<string>(owner, 'select invite_code from app_snow_window.crews where id = $1', [crew])
+    await as(stranger, 'select app_snow_window.join_crew($1)', [code])
+    await expect(as(stranger, 'select app_snow_window.remove_stay($1)', [flat])).rejects.toThrow(/not_your_stay/)
+    await as(owner, 'select app_snow_window.remove_stay($1)', [tuca])
+    expect(await as(owner, 'select booked_stay from app_snow_window.trips where id = $1', [trip])).toBeNull()
+
+    const many = JSON.stringify(Array.from({ length: 8 }, (_, i) => ({ name: `Place ${i}` })))
+    await expect(as(laura, 'select app_snow_window.add_stays($1, $2)', [trip, many])).rejects.toThrow(/stays_full/)
+
+    const day = await as<string>(owner, "select app_snow_window.create_trip($1, 'cerler', '2027-02-01', '2027-02-01', null, null)", [crew])
+    await as(owner, "select app_snow_window.set_trip_status($1, 'on')", [day])
+    await expect(as(owner, 'select app_snow_window.set_stay_prefs($1, 40, null)', [day])).rejects.toThrow(/day_trip_no_stay/)
   })
 })

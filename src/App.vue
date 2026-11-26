@@ -15,7 +15,7 @@ import { countByDay, markDay, type Person, type TripWindow } from './lib/overlap
 import { MAX_PEOPLE } from './lib/rules'
 import { type Range, span } from './lib/selection'
 import { type Crew, type CrewPreview, type CrewStore, inviteLink, parseInvite, type Session, storeError } from './lib/store'
-import { type Answer, MAX_TRIP_DAYS, type Trip, type TripDraft, type TripStatus } from './lib/trips'
+import { type Answer, MAX_TRIP_DAYS, type StayAction, type Trip, type TripDraft, type TripStatus } from './lib/trips'
 import { type Forecasts, loadForecasts } from './lib/weather'
 
 const props = defineProps<{ store: CrewStore; authError?: string | null }>()
@@ -353,6 +353,22 @@ const respond = (tripId: string, _personId: string, answer: Answer) => tripActio
 const setStatus = (tripId: string, _personId: string, status: TripStatus) =>
   tripAction(() => props.store.setTripStatus(tripId, status), status === 'on' ? "It's on! Everyone can see it." : undefined)
 
+function stayAction(a: StayAction) {
+  const s = props.store
+  switch (a.kind) {
+    case 'prefs':
+      return tripAction(() => s.setStayPrefs(a.tripId, a.budget, a.driving))
+    case 'add':
+      return tripAction(() => s.addStays(a.tripId, a.stays), a.stays.length === 1 ? 'Place added.' : `${a.stays.length} places added.`)
+    case 'remove':
+      return tripAction(() => s.removeStay(a.stayId))
+    case 'vote':
+      return tripAction(() => s.voteStay(a.stayId, a.vote))
+    case 'book':
+      return tripAction(() => s.bookStay(a.tripId, a.stayId), a.stayId ? 'Marked as booked.' : undefined)
+  }
+}
+
 function useResort(id: string) {
   pickResort(id)
   tab.value = 'board'
@@ -600,6 +616,7 @@ onBeforeUnmount(() => {
           @respond="respond"
           @status="setStatus"
           @show="(r) => showOnBoard(r.start, r)"
+          @stay="stayAction"
         />
       </section>
 

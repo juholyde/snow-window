@@ -3,20 +3,23 @@ import { computed } from 'vue'
 import { RESORTS } from '../config/resorts'
 import { addDays, type Day, formatLong } from '../lib/dates'
 import type { Person } from '../lib/overlap'
-import { type Answer, coverage, nights, type Trip, type TripStatus, tally } from '../lib/trips'
+import { type Answer, coverage, nights, type StayAction, type Trip, type TripStatus, tally } from '../lib/trips'
 import type { DayWeather } from '../lib/weather'
 import AppIcon from './AppIcon.vue'
+import StayPanel from './StayPanel.vue'
 
 const props = defineProps<{
   trip: Trip
   people: Person[]
   mine: Person[]
   forecast: Record<Day, DayWeather> | null
+  busy: boolean
 }>()
 const emit = defineEmits<{
   respond: [personId: string, answer: Answer]
   status: [personId: string, status: TripStatus]
   show: []
+  stay: [action: StayAction]
 }>()
 
 const resort = computed(() => RESORTS.find((r) => r.id === props.trip.resortId))
@@ -121,16 +124,8 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
       </p>
       <p v-if="trip.note" class="trip-note">{{ trip.note }}</p>
 
-      <div v-if="trip.stayUrl || trip.stayPrice !== null || trip.stayNote" class="trip-stay">
-        <strong>Stay</strong>
-        <span v-if="trip.stayPrice !== null">
-          €{{ trip.stayPrice }}/night · <strong>€{{ Math.round(trip.stayPrice * n) }}</strong> each
-        </span>
-        <span v-if="trip.stayNote">{{ trip.stayNote }}</span>
-        <a v-if="trip.stayUrl" :href="trip.stayUrl" target="_blank" rel="noopener noreferrer nofollow" class="cam">
-          See the place <AppIcon name="external" :size="14" />
-        </a>
-      </div>
+      <StayPanel v-if="trip.status === 'on' && n > 0" :trip="trip" :people="people" :me="mine[0]?.id ?? null" :busy="busy" @act="(a) => emit('stay', a)" />
+      <p v-else-if="trip.status === 'open' && n > 0" class="hint stay-later">Where to stay opens once {{ isMine ? 'you mark' : 'the proposer marks' }} it on.</p>
 
       <footer class="trip-actions">
         <button type="button" class="ghost" @click="emit('show')">Show on board</button>

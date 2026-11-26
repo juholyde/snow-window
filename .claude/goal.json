@@ -246,9 +246,21 @@
       "dependsOn": [
         "t14"
       ]
+    },
+    {
+      "id": "t17",
+      "title": "Stays after agreement + calmer controls (Juho 2026-11-26): stay options with an AI prompt and paste-back once a trip is on; no native selects or date pickers",
+      "kind": "build",
+      "status": "doing",
+      "importance": 4,
+      "size": "M",
+      "milestone": "m1",
+      "why": "The suggest form asked for a place before anyone agreed on dates; native dropdowns and date pickers clashed with the app.",
+      "doneWhen": "Migration 20261126120000 live in the sandbox, app pushed, a stay pasted on the live site.",
+      "dependsOn": []
     }
   ],
-  "next": "t13",
+  "next": "t17",
   "questions": [
     {
       "question": "Season range",

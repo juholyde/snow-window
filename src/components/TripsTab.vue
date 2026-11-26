@@ -4,7 +4,15 @@ import { SEASON } from '../config/calendar'
 import { type Day, formatLong } from '../lib/dates'
 import { type Person, stretchPicks } from '../lib/overlap'
 import { type Range, span } from '../lib/selection'
-import { type Answer, MAX_TRIP_DAYS, sortTrips, type Trip, type TripDraft, type TripStatus } from '../lib/trips'
+import {
+  type Answer,
+  MAX_TRIP_DAYS,
+  type StayAction,
+  sortTrips,
+  type Trip,
+  type TripDraft,
+  type TripStatus,
+} from '../lib/trips'
 import type { Forecasts } from '../lib/weather'
 import AvailabilityTimeline from './AvailabilityTimeline.vue'
 import TripCard from './TripCard.vue'
@@ -32,6 +40,7 @@ const emit = defineEmits<{
   respond: [tripId: string, personId: string, answer: Answer]
   status: [tripId: string, personId: string, status: TripStatus]
   show: [range: Range]
+  stay: [action: StayAction]
 }>()
 
 // Opening Suggest with dates already picked (e.g. from Snow windows) brings them into view.
@@ -170,6 +179,8 @@ const waiting = computed(
         :people="people"
         :mine="mine"
         :forecast="forecasts?.[t.resortId] ?? null"
+        :busy="busy"
+        @stay="(a) => emit('stay', a)"
         @respond="(pid, a) => emit('respond', t.id, pid, a)"
         @status="(pid, s) => emit('status', t.id, pid, s)"
         @show="emit('show', { start: t.start, end: t.end })"

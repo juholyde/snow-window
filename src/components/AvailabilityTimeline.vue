@@ -7,6 +7,7 @@ import { MAX_TRIP_DAYS } from '../lib/trips'
 import { RESORTS } from '../config/resorts'
 import type { DayWeather } from '../lib/weather'
 import AppIcon from './AppIcon.vue'
+import PickMenu from './PickMenu.vue'
 
 const props = defineProps<{
   days: Day[]
@@ -172,11 +173,9 @@ function scrollToDay(day: Day, smooth = true, contextDays = 3) {
   const left = box.scrollLeft + el.getBoundingClientRect().left - box.getBoundingClientRect().left
   box.scrollTo({ left: Math.max(0, left - nameCol - contextDays * el.offsetWidth), behavior: smooth && !matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto" })
 }
-function jumpMonth(event: Event) {
-  const select = event.target as HTMLSelectElement
-  scrollToDay(select.value, false, 0)
-  select.selectedIndex = 0
-}
+const monthOptions = computed(() => months.value.map((m) => ({ value: m.start, label: m.label })))
+const resortOptions = RESORTS.map((r) => ({ value: r.id, label: r.name, hint: r.region }))
+const resortName = computed(() => RESORTS.find((r) => r.id === props.resortId)?.name ?? 'Pick a resort')
 defineExpose({ scrollToDay })
 </script>
 
@@ -194,10 +193,7 @@ defineExpose({ scrollToDay })
     <div class="grid">
       <!-- Months -->
       <div class="name head corner month-jump">
-        <select aria-label="Jump to month" @change="jumpMonth">
-          <option value="" disabled selected>Go to month</option>
-          <option v-for="m in months" :key="m.start" :value="m.start">{{ m.label }}</option>
-        </select>
+        <PickMenu :options="monthOptions" :value="null" label="Go to month" menu-label="Jump to month" @pick="(d) => scrollToDay(d, false, 0)" />
       </div>
       <div class="head-months">
         <div v-for="m in months" :key="m.label" class="month" :style="{ gridColumn: `span ${m.span}` }">
@@ -254,12 +250,10 @@ defineExpose({ scrollToDay })
 
       <!-- Forecast -->
       <div class="name forecast-name">
-        <label class="resort-pick">
+        <div class="resort-pick">
           <small>Forecast at</small>
-          <select :value="resortId" @change="emit('resort', ($event.target as HTMLSelectElement).value)">
-            <option v-for="r in RESORTS" :key="r.id" :value="r.id">{{ r.name }}</option>
-          </select>
-        </label>
+          <PickMenu :options="resortOptions" :value="resortId" :label="resortName" menu-label="Forecast resort" @pick="(id) => emit('resort', id)" />
+        </div>
       </div>
       <div class="row forecast-row">
         <button

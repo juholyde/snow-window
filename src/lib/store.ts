@@ -1,7 +1,19 @@
 import type { Day } from './dates'
 import type { Person } from './overlap'
 import { cleanDays, cleanEmoji, cleanName, MAX_CREW_NAME, MAX_PEOPLE } from './rules'
-import { type Answer, cleanDraft, MAX_TRIPS, type Trip, type TripDraft, type TripStatus } from './trips'
+import {
+  type Answer,
+  cleanBudget,
+  cleanDraft,
+  cleanStay,
+  MAX_STAYS,
+  MAX_TRIPS,
+  nights,
+  type StayDraft,
+  type Trip,
+  type TripDraft,
+  type TripStatus,
+} from './trips'
 
 /** Who is signed in. A guest is an anonymous account that hasn't been saved with an email yet. */
 export type Session = { userId: string; guest: boolean; email: string | null }
@@ -41,6 +53,13 @@ export interface CrewStore {
   createTrip(crewId: string, draft: TripDraft): Promise<string>
   respond(tripId: string, answer: Answer): Promise<void>
   setTripStatus(tripId: string, status: TripStatus): Promise<void>
+
+  /** Stays open once a trip is on (any member). */
+  setStayPrefs(tripId: string, budget: number | null, driving: boolean | null): Promise<void>
+  addStays(tripId: string, stays: StayDraft[]): Promise<void>
+  removeStay(stayId: string): Promise<void>
+  voteStay(stayId: string, vote: boolean): Promise<void>
+  bookStay(tripId: string, stayId: string | null): Promise<void>
 }
 
 /** The database's error codes (migration), in words people understand. */
@@ -57,6 +76,10 @@ export const ERROR_COPY: Record<string, string> = {
   trips_full: 'This crew already has 40 suggestions.',
   trip_closed: 'That trip was cancelled.',
   not_your_trip: 'Only the person who suggested a trip can change it.',
+  trip_not_on: 'Places to stay open once the trip is marked on.',
+  day_trip_no_stay: 'A day trip has no place to stay.',
+  stays_full: `A trip holds up to ${MAX_STAYS} places to stay. Remove one first.`,
+  not_your_stay: 'Only the person who added a place, or who suggested the trip, can remove it.',
   identity_already_exists:
     "That Google account already has a login here. Use Sign in with Google instead (this device's guest crews stay behind).",
   manual_linking_disabled: "Saving with Google isn't switched on yet. Save with your email for now.",
@@ -227,7 +250,14 @@ export class LocalStore implements CrewStore {
       }),
       trips: d.trips
         .filter((t) => t.crewId === crewId)
-        .map(({ crewId: _, ...t }) => t)
+        // Trips saved before stays existed lack these fields.
+        .map(({ crewId: _, ...t }) => ({
+          ...t,
+          stayBudget: t.stayBudget ?? null,
+          driving: t.driving ?? null,
+          bookedStay: t.bookedStay ?? null,
+          stays: t.stays ?? [],
+        }))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     }
   }
@@ -243,8 +273,10 @@ export class LocalStore implements CrewStore {
       proposerId: this.me(),
       title: clean.title || null,
       note: clean.note || null,
-      stayUrl: clean.stayUrl || null,
-      stayNote: clean.stayNote || null,
+      stayBudget: null,
+      driving: null,
+      stays: [],
+      bookedStay: null,
       status: 'open',
       createdAt: new Date().toISOString(),
       responses: { [this.me()]: 'yes' },
@@ -267,6 +299,57 @@ export class LocalStore implements CrewStore {
     trip.status = status
     this.write(d)
   }
+
+  /** The trip a stay change applies to, with the database's rules (require_stay_trip). */
+  private stayTrip(d: LocalData, tripId: string): LocalTrip {
+    const trip = d.trips.find((t) => t.id === tripId) ?? fail('not_member')
+    this.member(d, trip.crewId)
+    if (nights(trip) === 0) fail('day_trip_no_stay')
+    if (trip.status !== 'on') fail('trip_not_on')
+    trip.stays ??= []
+    return trip
+  }
+  private stayOf(d: LocalData, stayId: string) {
+    const trip = d.trips.find((t) => t.stays?.some((s) => s.id === stayId)) ?? fail('not_member')
+    this.stayTrip(d, trip.id)
+    return { trip, stay: trip.stays.find((s) => s.id === stayId) ?? fail('not_member') }
+  }
+  async setStayPrefs(tripId: string, budget: number | null, driving: boolean | null) {
+    const d = this.read()
+    const trip = this.stayTrip(d, tripId)
+    trip.stayBudget = cleanBudget(budget)
+    trip.driving = driving
+    this.write(d)
+  }
+  async addStays(tripId: string, stays: StayDraft[]) {
+    const d = this.read()
+    const trip = this.stayTrip(d, tripId)
+    if (trip.stays.length + stays.length > MAX_STAYS) fail('stays_full')
+    for (const s of stays) trip.stays.push({ ...cleanStay(s), id: crypto.randomUUID(), addedBy: this.me(), votes: [] })
+    this.write(d)
+  }
+  async removeStay(stayId: string) {
+    const d = this.read()
+    const { trip, stay } = this.stayOf(d, stayId)
+    if (this.me() !== stay.addedBy && this.me() !== trip.proposerId) fail('not_your_stay')
+    trip.stays = trip.stays.filter((s) => s.id !== stayId)
+    if (trip.bookedStay === stayId) trip.bookedStay = null
+    this.write(d)
+  }
+  async voteStay(stayId: string, vote: boolean) {
+    const d = this.read()
+    const { stay } = this.stayOf(d, stayId)
+    stay.votes = stay.votes.filter((v) => v !== this.me())
+    if (vote) stay.votes.push(this.me())
+    this.write(d)
+  }
+  async bookStay(tripId: string, stayId: string | null) {
+    const d = this.read()
+    const trip = this.stayTrip(d, tripId)
+    if (stayId && !trip.stays.some((s) => s.id === stayId)) fail('not_member')
+    trip.bookedStay = stayId
+    this.write(d)
+  }
 }
 
 /** Takes someone out of a crew with their trips and answers there; passes the crew on or deletes it (as drop_member). */
@@ -275,7 +358,11 @@ function drop(d: LocalData, crewId: string, userId: string): LocalData {
   if (!crew) return d
   crew.members = crew.members.filter((m) => m.userId !== userId)
   d.trips = d.trips.filter((t) => !(t.crewId === crewId && t.proposerId === userId))
-  for (const t of d.trips) if (t.crewId === crewId) delete t.responses[userId]
+  for (const t of d.trips) {
+    if (t.crewId !== crewId) continue
+    delete t.responses[userId]
+    for (const s of t.stays ?? []) s.votes = s.votes.filter((v) => v !== userId)
+  }
   if (!crew.members.length) d.crews = d.crews.filter((c) => c.id !== crewId)
   else if (crew.ownerId === userId) crew.ownerId = crew.members[0]?.userId ?? null
   return d
