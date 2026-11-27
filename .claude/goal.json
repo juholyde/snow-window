@@ -458,7 +458,7 @@
       "id": "t31",
       "title": "Show more of each name on the Board",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "S",
       "flavour": [
@@ -467,13 +467,14 @@
       "milestone": "m1",
       "why": "t25 walkthrough: at 390px 19 of 20 names cut to about 8 characters, and two Ingebor… rows look identical (docs/walkthrough/2026-11-27).",
       "doneWhen": "At 390px the name column shows 12+ characters or tapping a name shows it in full; screenshot with the 20-member seed.",
-      "parent": "t25"
+      "parent": "t25",
+      "result": "Board names wrap to two lines at 13px in a 138px name column on phones (about 12 characters per line, full name in the tooltip); checked at 390px with the 20-member seed."
     },
     {
       "id": "t32",
       "title": "Bring a new guest's own row into view on join",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "M",
       "flavour": [
@@ -482,7 +483,8 @@
       "milestone": "m1",
       "why": "t25 walkthrough: only about 6 of 20 rows fit on a phone and the joiner's row is last.",
       "doneWhen": "A guest joining a 20-member crew at 390px lands with their own row visible (scrolled to or pinned), checked in Playwright.",
-      "parent": "t25"
+      "parent": "t25",
+      "result": "Your own row is now listed first on the Board, so a guest joining a 20-member crew lands with it right under the forecast; checked at 390px in Playwright, plus a test."
     },
     {
       "id": "t33",
@@ -603,10 +605,11 @@
       "milestone": "m1",
       "why": "t29 audit: day titles are hover-only, tally avatars are named only by title, a heading-order warning on Trips, and Options for Ana opens a dialog titled You.",
       "doneWhen": "axe-core shows no warnings on all four tabs, and each listed item is named in visible or accessible text.",
-      "parent": "t29"
+      "parent": "t29",
+      "notes": "Also from t37: overlap and forecast cells still use ISO-date aria-labels (an app test selects them by that text); switch to the long date format and update the test."
     }
   ],
-  "next": "t31",
+  "next": "t38",
   "questions": [
     {
       "question": "Season range",

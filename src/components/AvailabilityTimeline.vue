@@ -30,6 +30,8 @@ const emit = defineEmits<{
   pick: [range: Range]
 }>()
 const picking = computed(() => props.mode === 'pick')
+// Your own row comes first: it is the one you edit, and on a phone only a few rows fit.
+const rows = computed(() => (picking.value ? [] : [...props.people.filter((p) => props.editable.has(p.id)), ...props.people.filter((p) => !props.editable.has(p.id))]))
 const focus = (d: Day) => {
   if (!picking.value) emit('focus', d)
 }
@@ -422,12 +424,12 @@ defineExpose({ scrollToDay })
       </template>
 
       <!-- People -->
-      <template v-for="p in picking ? [] : people" :key="p.id">
+      <template v-for="p in rows" :key="p.id">
         <div class="grow" role="row" :aria-label="p.name">
         <div class="name person-name" :class="{ mine: editable.has(p.id) }" role="rowheader">
           <span class="avatar">{{ p.emoji }}</span>
           <span class="label">
-            <strong>{{ p.name }}</strong>
+            <strong :title="p.name">{{ p.name }}</strong>
             <small v-if="editable.has(p.id)">you · {{ p.days.length }} days</small>
             <small v-else>{{ p.days.length }} days</small>
           </span>

@@ -174,3 +174,14 @@ it('days can be marked by keyboard: roving stop, Space toggles, Shift+Arrow pain
   await key(cell('2026-12-08'), 'Shift', true, 'keyup')
   expect((await storeFor('ann').profile())?.days).toEqual(['2026-12-05', '2026-12-06', '2026-12-07', '2026-12-08'])
 })
+
+it('my own row is listed first on the board, above longer-standing members', async () => {
+  const { code } = await seedCrew('Pyrenees gang', [{ id: 'ann', name: 'Ann', days: ['2026-12-05'] }])
+  location.hash = `#join=${code}`
+  await openApp('ben')
+  await typeInto(document.querySelector('input[aria-label="Your name"]'), 'Ben')
+  await click(buttonNamed('Join the crew'))
+
+  const rows = [...document.querySelectorAll('.person-name strong')].map((e) => e.textContent)
+  expect(rows).toEqual(['Ben', 'Ann'])
+})

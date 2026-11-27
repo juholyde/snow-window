@@ -665,7 +665,7 @@ a.stay-name { text-decoration: underline; text-decoration-color: var(--orange); 
   .board-top .board-key summary { padding-block: 4px; }
   .me-guest { display: none; }
   .masthead { align-items: flex-end; padding-bottom: 6px; }
-  :root { --name: 124px; --col: 32px; }
+  :root { --name: 138px; --col: 32px; }
   .masthead { height: 92px; }
   .masthead-sun { display: none; }
   .brand { margin-left: 2px; }
@@ -701,6 +701,7 @@ a.stay-name { text-decoration: underline; text-decoration-color: var(--orange); 
   .trips-bar .seg { flex: 1; }
   .trips-bar .seg > button { flex: 1; justify-content: center; }
   .name { gap: 6px; padding-left: 8px; }
+  .person-name strong { font-size: 13px; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
   .avatar { width: 26px; height: 26px; font-size: 16px; }
   .corner .hint { display: none; }
   .manage { padding: 4px 2px; }
