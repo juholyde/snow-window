@@ -415,7 +415,7 @@
       "id": "t28",
       "title": "Decide how people hear about changes",
       "kind": "clarify",
-      "status": "todo",
+      "status": "done",
       "importance": 3,
       "size": "S",
       "flavour": [
@@ -423,7 +423,8 @@
       ],
       "milestone": "m2",
       "why": "Updates are poll-only and last-write-wins; options are email via Supabase, web push, Realtime, or a copy-a-nudge to non-responders.",
-      "doneWhen": "Juho picks an option and a follow-up labour task is filed."
+      "doneWhen": "Juho picks an option and a follow-up labour task is filed.",
+      "result": "Copy-a-nudge: list non-responders on the trip card with a Copy nudge button (no email, push or Realtime). Filed as t42."
     },
     {
       "id": "t29",
@@ -444,7 +445,7 @@
       "id": "t30",
       "title": "Decide on car-share and packing lists",
       "kind": "clarify",
-      "status": "todo",
+      "status": "done",
       "importance": 2,
       "size": "S",
       "flavour": [
@@ -452,7 +453,8 @@
       ],
       "milestone": "m2",
       "why": "Barcelona crews drive up; seats and who-brings-what need new tables, so confirm it is wanted first.",
-      "doneWhen": "Juho chooses car seats, packing list, both or neither; a follow-up task with a migration outline is filed if any."
+      "doneWhen": "Juho chooses car seats, packing list, both or neither; a follow-up task with a migration outline is filed if any.",
+      "result": "Car seats only: drivers offer seats, others claim them; no packing list. Filed as t43."
     },
     {
       "id": "t31",
@@ -629,9 +631,40 @@
       "why": "After t31 two Ingebor… rows still look the same at 390px (tooltips need hover), the own row clips to \"you · 0 da…\", and only about 7 rows fit under the banner and header.",
       "doneWhen": "On a 390px phone, tapping a name shows it in full, the own-row label is not clipped, and at least 9 person rows fit on first load with the 20-member seed; screenshot kept.",
       "parent": "t31"
+    },
+    {
+      "id": "t42",
+      "title": "Copy a nudge to people who have not answered a trip",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m2",
+      "why": "Juho chose copy-a-nudge for t28 (2026-11-27): updates stay poll-only, and the crew talks in WhatsApp.",
+      "doneWhen": "An open or on trip card lists who has not answered and offers Copy nudge, which copies a short message naming them with the trip and crew link; pure formatter with tests; hidden when everyone answered.",
+      "parent": "t28"
+    },
+    {
+      "id": "t43",
+      "title": "Add car seats to trips that are on",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 3,
+      "size": "M",
+      "flavour": [
+        "meaningful",
+        "fun"
+      ],
+      "milestone": "m2",
+      "why": "Juho chose car seats only for t30 (2026-11-27): Barcelona crews drive up and who drives is the real coordination problem.",
+      "doneWhen": "On an on trip, a member offers a car with N seats and others claim or leave a seat; migration with a cars table (trip, driver, seats, note) and seat claims, RPCs offer_car / remove_car / claim_seat / leave_seat checked like require_stay_trip, PGlite migration test; LocalStore mirrors it; app test covers claiming. Live db push is Juho's.",
+      "parent": "t30"
     }
   ],
-  "next": "t17",
+  "next": "t42",
   "questions": [
     {
       "question": "Season range",
@@ -668,6 +701,18 @@
       "answer": "Catalan Pyrenees, Andorra, Aragon, Sierra Nevada",
       "topic": "scope",
       "at": "2026-11-25"
+    },
+    {
+      "question": "How people hear about changes",
+      "answer": "Copy-a-nudge: list non-responders on the trip card with a Copy nudge button (no email, push or Realtime).",
+      "topic": "notifications",
+      "at": "2026-11-27"
+    },
+    {
+      "question": "Car-share and packing lists",
+      "answer": "Car seats only: drivers offer seats, others claim them; no packing list.",
+      "topic": "scope",
+      "at": "2026-11-27"
     }
   ],
   "sideQuests": []
