@@ -45,6 +45,10 @@ describe('fly rule', () => {
     expect(hint(city('helsinki'), city('tampere')).mode).toBe('drive')
     expect(hint(city('stockholm'), city('oslo')).mode).toBe('drive')
     expect(hint(city('barcelona'), city('toulouse')).mode).toBe('drive')
+    // Round the Bothnian Bay by land: Oulu to Riksgränsen drives; Helsinki to Riksgränsen flies.
+    const riksgransen = { lat: 68.43, lon: 18.12 }
+    expect(hint(city('oulu'), riksgransen).mode).toBe('drive')
+    expect(hint(city('helsinki'), riksgransen).mode).toBe('fly')
   })
 })
 

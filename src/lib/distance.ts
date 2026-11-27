@@ -38,13 +38,16 @@ function baltic(p: Point): 'fi' | 'ee' | 'other' {
  * Drive or fly? Fly when the straight line is over 950 km, or when the sea is in between: the rule is
  * deliberately crude. Finland and Estonia count as separate shores of the Baltic, so Helsinki to Tallinn
  * (a ferry), and Finland or Estonia to anywhere west of 21.5 degrees east (Sweden, Norway, Germany)
- * come out as 'fly'. Points in Finland or Estonia that are both on the same shore drive.
+ * come out as 'fly'. Points on the same shore drive, and so do two points both north of 64 degrees,
+ * where the road runs round the Bothnian Bay.
  */
 export function hint(from: Point, to: Point): Hint {
   const straight = km(from, to)
   const shoreA = baltic(from)
   const shoreB = baltic(to)
-  const seaBetween = shoreA !== shoreB && (shoreA !== 'other' || shoreB !== 'other')
+  // North of 64 degrees Finland and Sweden join by land around the Bothnian Bay (Tornio–Haparanda).
+  const bothNorth = from.lat >= 64 && to.lat >= 64
+  const seaBetween = !bothNorth && shoreA !== shoreB && (shoreA !== 'other' || shoreB !== 'other')
   if (straight > FLY_THRESHOLD_KM || seaBetween) return { km: straight, mode: 'fly' }
   const roadKm = Math.round(straight * DETOUR_FACTOR)
   const driveMinutes = Math.round(DRIVE_BASE_MINUTES + roadKm * DRIVE_MINUTES_PER_KM)
