@@ -400,7 +400,7 @@
       "id": "t27",
       "title": "Share a trip card image to the group chat",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 3,
       "size": "M",
       "flavour": [
@@ -408,7 +408,8 @@
       ],
       "milestone": "m2",
       "why": "A branded card with resort photo, dates and who is going spreads the app and rewards the planner.",
-      "doneWhen": "Share renders a 1080x1350 PNG client-side and uses the Web Share API with a download fallback."
+      "doneWhen": "Share renders a 1080x1350 PNG client-side and uses the Web Share API with a download fallback.",
+      "result": "Share card button renders a 1080x1350 PNG (Canvas 2D, photo credit kept), Web Share with download fallback; layout in cardLayout() with tests; sample in docs/share-card-sample.png."
     },
     {
       "id": "t28",
@@ -543,7 +544,7 @@
       "parent": "t25"
     }
   ],
-  "next": "t27",
+  "next": "t29",
   "questions": [
     {
       "question": "Season range",

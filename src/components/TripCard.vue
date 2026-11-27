@@ -5,6 +5,7 @@ import { addDays, type Day, formatLong } from '../lib/dates'
 import type { Person } from '../lib/overlap'
 import { downloadIcs, tripIcs } from '../lib/ics'
 import { tripSummary } from '../lib/share'
+import { shareTripCard } from '../lib/shareCard'
 import { type Answer, allGoing, coverage, nights, type StayAction, type Trip, type TripStatus, tally } from '../lib/trips'
 import type { DayWeather } from '../lib/weather'
 import AppIcon from './AppIcon.vue'
@@ -84,6 +85,18 @@ async function copySummary() {
   copied.value = true
   clearTimeout(copiedTimer)
   copiedTimer = setTimeout(() => (copied.value = false), 2500)
+}
+
+const sharing = ref(false)
+async function shareCard() {
+  sharing.value = true
+  try {
+    await shareTripCard(props.trip, props.people, tripSummary(props.trip, props.people, props.crewName, props.crewUrl), import.meta.env.BASE_URL)
+  } catch {
+    window.alert('Could not make the card on this device. Try Copy summary instead.')
+  } finally {
+    sharing.value = false
+  }
 }
 
 function addToCalendar() {
@@ -184,6 +197,9 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
         <button type="button" class="ghost" @click="emit('show')">Show on board</button>
         <button v-if="trip.status === 'on'" type="button" class="ghost" @click="copySummary">
           <AppIcon :name="copied ? 'check' : 'copy'" :size="15" /> {{ copied ? 'Summary copied' : 'Copy summary' }}
+        </button>
+        <button v-if="trip.status === 'on'" type="button" class="ghost" :disabled="sharing" @click="shareCard">
+          <AppIcon name="external" :size="15" /> {{ sharing ? 'Making card…' : 'Share card' }}
         </button>
         <button v-if="trip.status === 'on'" type="button" class="ghost" @click="addToCalendar">
           <AppIcon name="calendar" :size="15" /> Add to calendar

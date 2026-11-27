@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { inviteMessage, tripSummary } from '../src/lib/share'
+import { cardFilename, cardLayout } from '../src/lib/shareCard'
 import type { Trip } from '../src/lib/trips'
 
 const p = (id: string, emoji: string) => ({ id, name: id, emoji, days: [] })
@@ -36,5 +37,26 @@ describe('invite message', () => {
     const m = inviteMessage('Pyrenees Pals', URL)
     expect(m).toContain('Pyrenees Pals')
     expect(m.endsWith(URL)).toBe(true)
+  })
+})
+
+describe('share card layout', () => {
+  const many = Array.from({ length: 12 }, (_, i) => p(`Person-with-a-long-name-${i}`, '🎿'))
+  it('caps Going at 8 with +N more, clips long names and titles, and keeps the credit', () => {
+    const responses = Object.fromEntries(many.map((m) => [m.id, 'yes' as const]))
+    const L = cardLayout(trip({ responses, title: 'x'.repeat(80) }), many)
+    expect(L.going).toHaveLength(8)
+    expect(L.more).toBe(4)
+    expect(L.going[0]?.length ?? 0).toBeLessThanOrEqual(3 + 12)
+    expect(L.heading.length).toBeLessThanOrEqual(38)
+    expect(L.resortLine).toBeTruthy()
+    expect(L.credit).toMatch(/^Photo: .+, .+, Wikimedia Commons$/)
+  })
+  it('shows the booked stay, a day-trip label and a png filename', () => {
+    const stays = [{ id: 's1', name: 'Hotel Aneto', url: null, price: null, why: null, votes: [] }] as unknown as Trip['stays']
+    const L = cardLayout(trip({ stays, bookedStay: 's1', end: '2027-01-02' }), people)
+    expect(L.stay).toBe('Hotel Aneto')
+    expect(L.dates).toContain('day trip')
+    expect(cardFilename(trip())).toBe('snow-window-cerler-2027-01-02.png')
   })
 })
