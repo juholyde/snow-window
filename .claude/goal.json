@@ -5,7 +5,7 @@
     {
       "id": "m1",
       "title": "Availability board live",
-      "done": false,
+      "done": true,
       "keywords": [
         "timeline",
         "availability",
@@ -29,7 +29,7 @@
     {
       "id": "t1",
       "title": "Build the availability timeline with rows, emoji, holidays and snow windows",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 5,
       "size": "M",
@@ -41,7 +41,7 @@
     {
       "id": "t2",
       "title": "Register snow_window in the Supabase sandbox (APP.md: anonymous sign-in allowed, join_mode open) and push the migration",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 5,
       "size": "S",
@@ -55,7 +55,7 @@
     {
       "id": "t3",
       "title": "Create the GitHub repo, set Pages + secrets, deploy",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 5,
       "size": "S",
@@ -95,7 +95,7 @@
     {
       "id": "t6",
       "title": "Snow palette with orange accent, display face, flat layered hero",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 4,
       "size": "M",
@@ -109,7 +109,7 @@
     {
       "id": "t7",
       "title": "Resort weather row: Open-Meteo forecast for days within 16 days",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 4,
       "size": "M",
@@ -123,7 +123,7 @@
     {
       "id": "t8",
       "title": "Place the remaining Codex art (sun, tycoon skier) in the app",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 3,
       "size": "S",
@@ -137,7 +137,7 @@
     {
       "id": "t9",
       "title": "One-screen app with tabs (Board, Snow windows, Resorts) and resort webcams",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 4,
       "size": "M",
@@ -151,7 +151,7 @@
     {
       "id": "t10",
       "title": "Trips tab: suggest a day trip or stay, group answers Going/Maybe/Can't, proposer marks it on",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 4,
       "size": "L",
@@ -165,7 +165,7 @@
     {
       "id": "t11",
       "title": "Trips split into Suggest (pick dates on the timeline) and Answer (cards with big answer buttons)",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 4,
       "size": "M",
@@ -179,7 +179,7 @@
     {
       "id": "t12",
       "title": "Resort photos (Wikimedia Commons, credited) and travel from Barcelona by car, bus, train",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 3,
       "size": "S",
@@ -207,7 +207,7 @@
     {
       "id": "t14",
       "title": "Crews and guest-first sign-in: create a crew, invite link, many crews per person, one calendar per person",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 5,
       "size": "M",
@@ -221,7 +221,7 @@
     {
       "id": "t15",
       "title": "Save and sign in with Google (Juho chose yes 2026-11-25; needs enable_manual_linking in the sandbox)",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 2,
       "size": "S",
@@ -236,7 +236,7 @@
     {
       "id": "t16",
       "title": "Full-width timeline: crew sheet from the header, day strip under the board, trip form under the Suggest timeline",
-      "kind": "build",
+      "kind": "labour",
       "status": "done",
       "importance": 4,
       "size": "S",
@@ -250,7 +250,7 @@
     {
       "id": "t17",
       "title": "Stays after agreement + calmer controls (Juho 2026-11-26): stay options with an AI prompt and paste-back once a trip is on; no native selects or date pickers",
-      "kind": "build",
+      "kind": "labour",
       "status": "doing",
       "importance": 4,
       "size": "M",
@@ -259,9 +259,192 @@
       "doneWhen": "Migration 20261126120000 live in the sandbox, app pushed, a stay pasted on the live site.",
       "dependsOn": [],
       "note": "2026-11-26: migration 20261126120000 live (tables, gates, 6 functions checked; API sees them), app a40c90f deployed. Left: one real trip marked on with a pasted stay on the live site. 2026-11-27: full flow checked in demo mode with mock places (suggest, mark on, budget/driving, copy prompt, bad paste error, paste 3 STAY lines, vote, book, reopen keeps data, mobile 375px). Found and fixed: numbered '3. STAY' lines were dropped and trailing '**' kept. Left: Juho's own live try."
+    },
+    {
+      "id": "t18",
+      "title": "Nudge people about trips waiting on their answer",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 5,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m2",
+      "why": "Nothing tells a friend a trip was suggested; TripCard only flags unanswered inside the Trips tab and the 30s poll is silent.",
+      "doneWhen": "Trips tab badge counts trips where my row is unanswered, a Board banner links to them, both clear once I answer; unit test on the count."
+    },
+    {
+      "id": "t19",
+      "title": "Copy a WhatsApp-ready trip summary and invite message",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 5,
+      "size": "M",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m2",
+      "why": "The crew lives in WhatsApp; an on trip has no copyable text and the invite is a bare link.",
+      "doneWhen": "Copy summary on an on trip gives dates, resort, who is going, the booked stay and the crew link; Copy invite link adds a short message with the crew name; pure formatter with unit tests."
+    },
+    {
+      "id": "t20",
+      "title": "Add a next-step strip that guides the crew through the journey",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "After joining, people land on a bare board with no hint to mark days, then suggest a trip from the overlap.",
+      "doneWhen": "One strip derives the step from crew state (few marked, no window, no trip, awaiting answers) with one button to the right tab, hidden once a trip is on; unit test on the step logic."
+    },
+    {
+      "id": "t21",
+      "title": "Show clear errors for expired sessions and the anonymous sign-in limit",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "call() throws raw Supabase messages, and the sandbox allows 30 anonymous sign-ins per hour per IP, so a group on one wifi can hit it with no explanation.",
+      "doneWhen": "Not-signed-in and rate-limit errors show a plain sign-in-again / try-later message; store test with a mocked client covers both."
+    },
+    {
+      "id": "t22",
+      "title": "Add to calendar (.ics) for trips that are on",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m2",
+      "why": "A decided trip should land in everyone's phone calendar; needs no server.",
+      "doneWhen": "An on trip offers a download of a valid all-day .ics with resort, plan and stay link; unit test covers the exclusive end date; opens in Apple Calendar."
+    },
+    {
+      "id": "t23",
+      "title": "Show a countdown and powder watch for the next on trip",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "M",
+      "flavour": [
+        "interesting",
+        "fun"
+      ],
+      "milestone": "m2",
+      "why": "Open-Meteo already feeds the board; days-to-go plus forecast snow on the trip days gives people a reason to open the app between plans.",
+      "doneWhen": "Board and Trips show days to go for the nearest on trip and, within the 16-day forecast, snowfall per trip day with 5 cm+ days highlighted; hidden with no forecast days."
+    },
+    {
+      "id": "t24",
+      "title": "Test the app flows as components against LocalStore",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "M",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "Only logic and migration tests exist; App.vue holds the poll, invite and act() flows untested.",
+      "doneWhen": "Vitest with happy-dom covers mark days, join by invite, answer a trip and book a stay against LocalStore; full suite passes."
+    },
+    {
+      "id": "t25",
+      "title": "Walk the invite-to-answer journey on a phone with a full 20-person crew",
+      "kind": "expedition",
+      "status": "todo",
+      "importance": 4,
+      "size": "M",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "Success needs a real group on phones; drag-to-mark, range picks and 20 rows of 24-character names were never tried together at 390px.",
+      "doneWhen": "Playwright on a local seeded demo at 390px: a fresh guest joins by link, marks days, suggests and answers; a 20-member long-name crew renders without overflow; screenshots kept and friction filed as tasks."
+    },
+    {
+      "id": "t26",
+      "title": "Celebrate when everyone says Going",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 3,
+      "size": "S",
+      "flavour": [
+        "fun"
+      ],
+      "milestone": "m2",
+      "why": "The moment a trip locks in is the high point, and Rufus's art is unused there.",
+      "doneWhen": "When the tally turns all Going the card shows a one-time Rufus banner with snowfall, respecting prefers-reduced-motion; test covers the trigger."
+    },
+    {
+      "id": "t27",
+      "title": "Share a trip card image to the group chat",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 3,
+      "size": "M",
+      "flavour": [
+        "fun"
+      ],
+      "milestone": "m2",
+      "why": "A branded card with resort photo, dates and who is going spreads the app and rewards the planner.",
+      "doneWhen": "Share renders a 1080x1350 PNG client-side and uses the Web Share API with a download fallback."
+    },
+    {
+      "id": "t28",
+      "title": "Decide how people hear about changes",
+      "kind": "clarify",
+      "status": "todo",
+      "importance": 3,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m2",
+      "why": "Updates are poll-only and last-write-wins; options are email via Supabase, web push, Realtime, or a copy-a-nudge to non-responders.",
+      "doneWhen": "Juho picks an option and a follow-up labour task is filed."
+    },
+    {
+      "id": "t29",
+      "title": "Audit keyboard and screen-reader use of the timeline and trip flow",
+      "kind": "research",
+      "status": "todo",
+      "importance": 3,
+      "size": "M",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "Timeline day cells are click handlers with few aria attributes; nothing was tried by keyboard or VoiceOver.",
+      "doneWhen": "Keyboard-only and VoiceOver passes over mark, overlap, answer and stay vote; each failure filed as a task."
+    },
+    {
+      "id": "t30",
+      "title": "Decide on car-share and packing lists",
+      "kind": "clarify",
+      "status": "todo",
+      "importance": 2,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m2",
+      "why": "Barcelona crews drive up; seats and who-brings-what need new tables, so confirm it is wanted first.",
+      "doneWhen": "Juho chooses car seats, packing list, both or neither; a follow-up task with a migration outline is filed if any."
     }
   ],
-  "next": "t17",
+  "next": "t18",
   "questions": [
     {
       "question": "Season range",
