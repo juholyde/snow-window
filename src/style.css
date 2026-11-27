@@ -125,7 +125,7 @@ body { overflow: hidden; }
 
 /* Board */
 .board { display: flex; flex-direction: column; min-height: 0; background: var(--snow-1); border: 1px solid var(--snow-3); border-radius: var(--radius); box-shadow: 0 18px 40px -28px oklch(24% 0.05 255 / 0.45); overflow: hidden; }
-.timeline { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.timeline { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scroll-padding-left: calc(var(--name) + 20px); }
 /* Header, crew and forecast rows stay put while people scroll under them. */
 .head-months, .corner { position: sticky; top: 0; z-index: 3; background: var(--snow-1); height: 28px; }
 .head-days, .corner-low { position: sticky; top: 28px; z-index: 3; background: var(--snow-1); }

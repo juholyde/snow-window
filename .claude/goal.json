@@ -429,7 +429,7 @@
       "id": "t29",
       "title": "Audit keyboard and screen-reader use of the timeline and trip flow",
       "kind": "research",
-      "status": "todo",
+      "status": "done",
       "importance": 3,
       "size": "M",
       "flavour": [
@@ -437,7 +437,8 @@
       ],
       "milestone": "m1",
       "why": "Timeline day cells are click handlers with few aria attributes; nothing was tried by keyboard or VoiceOver.",
-      "doneWhen": "Keyboard-only and VoiceOver passes over mark, overlap, answer and stay vote; each failure filed as a task."
+      "doneWhen": "Keyboard-only and VoiceOver passes over mark, overlap, answer and stay vote; each failure filed as a task.",
+      "result": "Audit in docs/a11y-audit-2026-11-27.md: own days cannot be marked by keyboard (blocker), 453 tab stops, focus lost after trip actions; real VoiceOver not run. Fixed sticky-column focus hiding."
     },
     {
       "id": "t30",
