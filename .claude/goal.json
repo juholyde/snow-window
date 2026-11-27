@@ -685,7 +685,7 @@
       "id": "t45",
       "title": "Add regions and new resorts: Alps, Finland, Sweden",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "L",
       "flavour": [
@@ -694,7 +694,8 @@
       ],
       "milestone": "m1",
       "why": "Juho 2026-11-27: crews suggest from Spain, the Alps, Finland and Sweden, not only Spain",
-      "doneWhen": "Each resort in resorts.ts has a region (spain = Spain + Andorra, alps, finland, sweden). About 8 big Alps resorts across FR/CH/AT/IT, 5 in Finland (Levi, Ylläs, Ruka, Pyhä, Saariselkä) and 5 in Sweden (Åre, Sälen, Vemdalen, Riksgränsen, Idre) are added with coordinates, elevation, a Wikimedia Commons photo with credit, and webcam links checked. Forecasts load for all of them; tests pass"
+      "doneWhen": "Each resort in resorts.ts has a region (spain = Spain + Andorra, alps, finland, sweden). About 8 big Alps resorts across FR/CH/AT/IT, 5 in Finland (Levi, Ylläs, Ruka, Pyhä, Saariselkä) and 5 in Sweden (Åre, Sälen, Vemdalen, Riksgränsen, Idre) are added with coordinates, elevation, a Wikimedia Commons photo with credit, and webcam links checked. Forecasts load for all of them; tests pass",
+      "result": "75391c7, merged: 25 resorts (18 new: chamonix, val-thorens, tignes, zermatt, verbier, st-anton, kitzbuehel, cervinia, levi, yllas, ruka, pyha, saariselka, are, salen, vemdalen, riksgransen, idre-fjall), area field + AREAS, Barcelona travel optional, forecast cache keyed by resort ids. Commons credits spot-checked. Levi has only the archive webcam; Riksgränsen's webcam is third-party"
     },
     {
       "id": "t46",
