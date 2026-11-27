@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-const migrations = ['20261125160000_app_snow_window__init.sql', '20261126120000_app_snow_window__stays.sql'].map((f) =>
+const migrations = ['20261125160000_app_snow_window__init.sql', '20261126120000_app_snow_window__stays.sql', '20261127120000_app_snow_window__cars.sql'].map((f) =>
   readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8'),
 )
 
@@ -193,5 +193,55 @@ describe('stays', () => {
     const day = await as<string>(owner, "select app_snow_window.create_trip($1, 'cerler', '2027-02-01', '2027-02-01', null, null)", [crew])
     await as(owner, "select app_snow_window.set_trip_status($1, 'on')", [day])
     await expect(as(owner, 'select app_snow_window.set_stay_prefs($1, 40, null)', [day])).rejects.toThrow(/day_trip_no_stay/)
+  })
+})
+
+describe('cars', () => {
+  it('open once the trip is on: offer, claim, full, move, leave, remove, and a leaver takes theirs along', async () => {
+    const owner = await newUser('Owner')
+    const laura = await newUser('Laura')
+    const ben = await newUser('Ben')
+    const outsider = await newUser('Out')
+    const { crew } = await crewWith(owner, laura, ben)
+    const trip = await as<string>(owner, "select app_snow_window.create_trip($1, 'cerler', '2027-02-01', '2027-02-01', null, null)", [crew])
+    await expect(as(laura, "select app_snow_window.offer_car($1, 2, null)", [trip])).rejects.toThrow(/trip_not_on/)
+    await as(owner, "select app_snow_window.set_trip_status($1, 'on')", [trip])
+    await expect(as(outsider, "select app_snow_window.offer_car($1, 2, null)", [trip])).rejects.toThrow(/not_member/)
+    await expect(as(laura, "select app_snow_window.offer_car($1, 9, null)", [trip])).rejects.toThrow(/bad_seats/)
+
+    const small = await as<string>(laura, "select app_snow_window.offer_car($1, 1, ' Leaves 7am ')", [trip])
+    await expect(as(laura, "select app_snow_window.offer_car($1, 2, null)", [trip])).rejects.toThrow(/car_exists/)
+    const big = await as<string>(owner, 'select app_snow_window.offer_car($1, 3, null)', [trip])
+    await expect(as(laura, 'select app_snow_window.claim_seat($1)', [small])).rejects.toThrow(/own_car/)
+
+    await as(ben, 'select app_snow_window.claim_seat($1)', [small])
+    await expect(as(laura, 'select app_snow_window.claim_seat($1)', [big])).rejects.toThrow(/own_car/)
+    await expect(as(owner, 'select app_snow_window.claim_seat($1)', [small])).rejects.toThrow(/own_car/)
+    // Drivers never take seats; Ben holds small's only seat.
+    const seated = async () =>
+      (await as<{ trips: { cars: { id: string; riders: string[]; note: string | null }[] }[] }>(owner, 'select app_snow_window.get_crew($1)', [crew])).trips[0]?.cars
+    expect((await seated())?.find((c) => c.id === small)).toMatchObject({ riders: [ben], note: 'Leaves 7am' })
+
+    const late = await newUser('Late')
+    const code = await as<string>(owner, 'select invite_code from app_snow_window.crews where id = $1', [crew])
+    await as(late, 'select app_snow_window.join_crew($1)', [code])
+    await expect(as(late, 'select app_snow_window.claim_seat($1)', [small])).rejects.toThrow(/car_full/)
+
+    // Moving: Ben takes a seat in the big car and frees the small one.
+    await as(ben, 'select app_snow_window.claim_seat($1)', [big])
+    expect((await seated())?.find((c) => c.id === small)?.riders).toEqual([])
+    expect((await seated())?.find((c) => c.id === big)?.riders).toEqual([ben])
+    await as(late, 'select app_snow_window.claim_seat($1)', [small])
+
+    await as(ben, 'select app_snow_window.leave_seat($1)', [big])
+    expect((await seated())?.find((c) => c.id === big)?.riders).toEqual([])
+    await expect(as(ben, 'select app_snow_window.remove_car($1)', [small])).rejects.toThrow(/not_your_car/)
+
+    await as(owner, 'select app_snow_window.remove_member($1, $2)', [crew, late])
+    expect((await seated())?.find((c) => c.id === small)?.riders).toEqual([])
+    await as(owner, 'select app_snow_window.remove_member($1, $2)', [crew, laura])
+    expect((await seated())?.map((c) => c.id)).toEqual([big])
+    await as(owner, 'select app_snow_window.remove_car($1)', [big])
+    expect(await seated()).toEqual([])
   })
 })

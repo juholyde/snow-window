@@ -7,7 +7,7 @@ const trip = (over: Partial<Trip> = {}): Trip => ({
   id: 'abc', proposerId: 'Ana', resortId: 'cerler', start: '2027-01-30', end: '2027-02-01', title: null, note: null,
   status: 'on', createdAt: '0', responses: { Ana: 'yes' }, stayBudget: null, driving: null,
   stays: [{ id: 's1', addedBy: 'Ana', name: 'Chalet, "Nice"; ok', url: 'https://stay.test/x', price: null, why: null, votes: [] }],
-  bookedStay: 's1', ...over,
+  bookedStay: 's1', cars: [], ...over,
 })
 const make = (t = trip()) => tripIcs(t, people, 'Crew', 'https://x.test/#join=1', new Date('2027-01-01T10:20:30Z'))
 

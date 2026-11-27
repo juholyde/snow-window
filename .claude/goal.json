@@ -652,7 +652,8 @@
       "id": "t43",
       "title": "Add car seats to trips that are on",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
+      "result": "Cars on on-trips (day trips too): CarPanel, offer_car/remove_car/claim_seat/leave_seat, LocalStore mirror, migration and app tests; live db push of 20261127120000 is pending (Juho).",
       "importance": 3,
       "size": "M",
       "flavour": [

@@ -3,7 +3,9 @@ import type { Person } from './overlap'
 import { cleanDays, cleanEmoji, cleanName, MAX_CREW_NAME, MAX_PEOPLE } from './rules'
 import {
   type Answer,
+  type Car,
   cleanBudget,
+  cleanCar,
   cleanDraft,
   cleanStay,
   MAX_STAYS,
@@ -60,6 +62,12 @@ export interface CrewStore {
   removeStay(stayId: string): Promise<void>
   voteStay(stayId: string, vote: boolean): Promise<void>
   bookStay(tripId: string, stayId: string | null): Promise<void>
+
+  /** Cars open once a trip is on, day trips too (any member). */
+  offerCar(tripId: string, seats: number, note: string): Promise<string>
+  removeCar(carId: string): Promise<void>
+  claimSeat(carId: string): Promise<void>
+  leaveSeat(carId: string): Promise<void>
 }
 
 /** The database's error codes (migration), in words people understand. */
@@ -81,6 +89,11 @@ export const ERROR_COPY: Record<string, string> = {
   day_trip_no_stay: 'A day trip has no place to stay.',
   stays_full: `A trip holds up to ${MAX_STAYS} places to stay. Remove one first.`,
   not_your_stay: 'Only the person who added a place, or who suggested the trip, can remove it.',
+  car_exists: 'You already offered a car on this trip. Remove it to offer another.',
+  bad_seats: 'A car offers 1 to 8 seats.',
+  car_full: 'That car just filled up.',
+  own_car: "You're driving on this trip, so you can't take a seat.",
+  not_your_car: 'Only the driver, or who suggested the trip, can remove a car.',
   identity_already_exists:
     "That Google account already has a login here. Use Sign in with Google instead (this device's guest crews stay behind).",
   manual_linking_disabled: "Saving with Google isn't switched on yet. Save with your email for now.",
@@ -258,6 +271,7 @@ export class LocalStore implements CrewStore {
           driving: t.driving ?? null,
           bookedStay: t.bookedStay ?? null,
           stays: t.stays ?? [],
+          cars: t.cars ?? [],
         }))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     }
@@ -278,6 +292,7 @@ export class LocalStore implements CrewStore {
       driving: null,
       stays: [],
       bookedStay: null,
+      cars: [],
       status: 'open',
       createdAt: new Date().toISOString(),
       responses: { [this.me()]: 'yes' },
@@ -351,6 +366,54 @@ export class LocalStore implements CrewStore {
     trip.bookedStay = stayId
     this.write(d)
   }
+
+  /** The trip a car change applies to, with the database's rules (require_car_trip). */
+  private carTrip(d: LocalData, tripId: string): LocalTrip {
+    const trip = d.trips.find((t) => t.id === tripId) ?? fail('not_member')
+    this.member(d, trip.crewId)
+    if (trip.status !== 'on') fail('trip_not_on')
+    trip.cars ??= []
+    return trip
+  }
+  private carOf(d: LocalData, carId: string) {
+    const trip = d.trips.find((t) => t.cars?.some((c) => c.id === carId)) ?? fail('not_member')
+    this.carTrip(d, trip.id)
+    return { trip, car: trip.cars.find((c) => c.id === carId) ?? fail('not_member') }
+  }
+  async offerCar(tripId: string, seats: number, note: string) {
+    const d = this.read()
+    const trip = this.carTrip(d, tripId)
+    const clean = cleanCar(seats, note)
+    if (trip.cars.some((c) => c.driverId === this.me())) fail('car_exists')
+    for (const c of trip.cars) c.riders = c.riders.filter((r) => r !== this.me())
+    const car: Car = { id: crypto.randomUUID(), driverId: this.me(), ...clean, riders: [] }
+    trip.cars.push(car)
+    this.write(d)
+    return car.id
+  }
+  async removeCar(carId: string) {
+    const d = this.read()
+    const { trip, car } = this.carOf(d, carId)
+    if (this.me() !== car.driverId && this.me() !== trip.proposerId) fail('not_your_car')
+    trip.cars = trip.cars.filter((c) => c.id !== carId)
+    this.write(d)
+  }
+  async claimSeat(carId: string) {
+    const d = this.read()
+    const { trip, car } = this.carOf(d, carId)
+    if (trip.cars.some((c) => c.driverId === this.me())) fail('own_car')
+    if (car.riders.includes(this.me())) return
+    if (car.riders.length >= car.seats) fail('car_full')
+    for (const c of trip.cars) c.riders = c.riders.filter((r) => r !== this.me())
+    car.riders.push(this.me())
+    this.write(d)
+  }
+  async leaveSeat(carId: string) {
+    const d = this.read()
+    const { car } = this.carOf(d, carId)
+    car.riders = car.riders.filter((r) => r !== this.me())
+    this.write(d)
+  }
 }
 
 /** Takes someone out of a crew with their trips and answers there; passes the crew on or deletes it (as drop_member). */
@@ -363,6 +426,8 @@ function drop(d: LocalData, crewId: string, userId: string): LocalData {
     if (t.crewId !== crewId) continue
     delete t.responses[userId]
     for (const s of t.stays ?? []) s.votes = s.votes.filter((v) => v !== userId)
+    t.cars = (t.cars ?? []).filter((c) => c.driverId !== userId)
+    for (const c of t.cars) c.riders = c.riders.filter((r) => r !== userId)
   }
   if (!crew.members.length) d.crews = d.crews.filter((c) => c.id !== crewId)
   else if (crew.ownerId === userId) crew.ownerId = crew.members[0]?.userId ?? null

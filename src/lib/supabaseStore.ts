@@ -3,7 +3,7 @@ import type { Day } from './dates'
 import type { Person } from './overlap'
 import { cleanDays, cleanEmoji, cleanName } from './rules'
 import { type Crew, type CrewBoard, type CrewPreview, type CrewStore, cleanCrewName, ERROR_COPY, type Session, storeError } from './store'
-import { type Answer, cleanBudget, cleanDraft, cleanStay, type StayDraft, type TripDraft, type TripStatus } from './trips'
+import { type Answer, cleanBudget, cleanCar, cleanDraft, cleanStay, type StayDraft, type TripDraft, type TripStatus } from './trips'
 
 const APP = 'snow_window'
 
@@ -138,4 +138,12 @@ export class SupabaseStore implements CrewStore {
   removeStay = (stayId: string) => this.call<void>('remove_stay', { p_stay: stayId })
   voteStay = (stayId: string, vote: boolean) => this.call<void>('vote_stay', { p_stay: stayId, p_vote: vote })
   bookStay = (tripId: string, stayId: string | null) => this.call<void>('book_stay', { p_trip: tripId, p_stay: stayId })
+
+  offerCar(tripId: string, seats: number, note: string) {
+    const c = cleanCar(seats, note)
+    return this.call<string>('offer_car', { p_trip: tripId, p_seats: c.seats, p_note: c.note })
+  }
+  removeCar = (carId: string) => this.call<void>('remove_car', { p_car: carId })
+  claimSeat = (carId: string) => this.call<void>('claim_seat', { p_car: carId })
+  leaveSeat = (carId: string) => this.call<void>('leave_seat', { p_car: carId })
 }

@@ -7,6 +7,7 @@ import { type Range, span } from '../lib/selection'
 import {
   type Answer,
   MAX_TRIP_DAYS,
+  type CarAction,
   type StayAction,
   sortTrips,
   type Trip,
@@ -45,6 +46,7 @@ const emit = defineEmits<{
   status: [tripId: string, personId: string, status: TripStatus]
   show: [range: Range]
   stay: [action: StayAction]
+  car: [action: CarAction]
   announce: [text: string]
 }>()
 
@@ -211,6 +213,7 @@ const waiting = computed(
         :crew-name="crewName"
         :crew-url="crewUrl"
         @stay="(a) => emit('stay', a)"
+        @car="(a) => emit('car', a)"
         @announce="(m) => emit('announce', m)"
         @respond="(pid, a) => emit('respond', t.id, pid, a)"
         @status="(pid, s) => emit('status', t.id, pid, s)"

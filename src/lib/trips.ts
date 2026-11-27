@@ -7,6 +7,8 @@ import type { Person } from './overlap'
 export const MAX_TRIPS = 40
 export const MAX_TRIP_DAYS = 14
 export const MAX_STAYS = 8
+export const MAX_SEATS = 8
+export const MAX_CAR_NOTE = 80
 
 export type Answer = 'yes' | 'maybe' | 'no'
 export type TripStatus = 'open' | 'on' | 'cancelled'
@@ -27,7 +29,11 @@ export type Trip = {
   driving: boolean | null
   stays: Stay[]
   bookedStay: string | null
+  cars: Car[]
 }
+
+/** A car offered once the trip is on: free passenger seats, and who took them. */
+export type Car = { id: string; driverId: string; seats: number; note: string | null; riders: string[] }
 
 /** A place to stay, suggested once the trip is on (by hand or pasted from an AI answer). */
 export type Stay = {
@@ -164,6 +170,21 @@ export type StayAction =
   | { kind: 'remove'; stayId: string }
   | { kind: 'vote'; stayId: string; vote: boolean }
   | { kind: 'book'; tripId: string; stayId: string | null }
+
+/** What a crew member did about a trip's cars; App runs it against the store. */
+export type CarAction =
+  | { kind: 'offer'; tripId: string; seats: number; note: string }
+  | { kind: 'remove'; carId: string }
+  | { kind: 'claim'; carId: string }
+  | { kind: 'leave'; carId: string }
+
+/** Fail fast on a car the database would refuse; returns the trimmed note (null when empty). */
+export function cleanCar(seats: number, note: string): { seats: number; note: string | null } {
+  if (!Number.isInteger(seats) || seats < 1 || seats > MAX_SEATS) throw new Error(`A car offers 1 to ${MAX_SEATS} seats`)
+  const clean = note.trim()
+  if (clean.length > MAX_CAR_NOTE) throw new Error(`Keep the note to ${MAX_CAR_NOTE} characters`)
+  return { seats, note: clean || null }
+}
 
 /** Open or on trips where this person has not answered yet; cancelled ones never wait. */
 export function awaitingAnswer(trips: readonly Trip[], personId: string): number {

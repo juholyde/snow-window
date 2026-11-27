@@ -729,6 +729,8 @@ a.stay-name { text-decoration: underline; text-decoration-color: var(--orange); 
 /* Primary controls are at least 40px tall on phones and touch screens; desktop keeps its tighter sizes. */
 @media (max-width: 760px), (pointer: coarse) {
   .tab, .primary, .ghost, .seg > button, .seg > label, .drive-toggle button, .vote, .pick, .chip, .emoji-option, .small-btn { min-height: 40px; }
+  .stepper button, .car-form input { min-height: 40px; }
+  .stepper button { min-width: 40px; }
   .emoji-option { min-width: 40px; }
   .drive-toggle button, .vote { justify-content: center; }
 }
@@ -749,3 +751,22 @@ a.stay-name { text-decoration: underline; text-decoration-color: var(--orange); 
 .powder li.fresh { background: var(--orange-wash); color: var(--orange-deep); }
 .grow { display: contents; }
 .cell:focus-visible, .day-head:focus-visible { outline-offset: -2px; position: relative; z-index: 1; }
+
+/* Cars (a trip that's on) */
+.car-panel { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px; background: var(--snow-2); }
+.car-panel h3 { margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase; line-height: 1; }
+.car-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.car-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 10px 12px; border-radius: 10px; background: var(--snow-1); }
+.car-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 220px; }
+.car-seats { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.seat-dots { display: inline-flex; gap: 4px; }
+.seat { width: 20px; height: 20px; border-radius: 50%; border: 2px dashed var(--ink-3); display: inline-grid; place-items: center; font-size: 12px; line-height: 1; }
+.seat.taken { border: 0; background: var(--glacier-wash); }
+.car-panel .small-btn { margin-left: 0; }
+.car-offer { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; }
+.car-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.car-form input { flex: 1 1 200px; min-width: 0; font-size: 16px; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--snow-3); background: var(--snow-1); color: var(--ink); }
+.car-form-buttons { display: flex; gap: 8px; }
+.stepper { margin: 0; border: 0; min-width: 0; display: inline-flex; align-items: center; gap: 4px; padding: 3px; border-radius: 999px; background: var(--snow-1); }
+.stepper button { padding: 4px 12px; border-radius: 999px; font-size: 16px; font-weight: 800; line-height: 1; }
+.stepper output { min-width: 6ch; text-align: center; font-size: 14px; font-weight: 700; }

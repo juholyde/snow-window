@@ -18,7 +18,7 @@ import { MAX_PEOPLE } from './lib/rules'
 import { inviteMessage } from './lib/share'
 import { type Range, span } from './lib/selection'
 import { type Crew, type CrewPreview, type CrewStore, inviteLink, parseInvite, type Session, storeError } from './lib/store'
-import { type Answer, awaitingAnswer, MAX_TRIP_DAYS, type StayAction, type Trip, type TripDraft, type TripStatus } from './lib/trips'
+import { type Answer, awaitingAnswer, type CarAction, MAX_TRIP_DAYS, type StayAction, type Trip, type TripDraft, type TripStatus } from './lib/trips'
 import { type Forecasts, loadForecasts } from './lib/weather'
 
 const props = defineProps<{ store: CrewStore; authError?: string | null }>()
@@ -455,6 +455,23 @@ function runStay(a: StayAction) {
   }
 }
 
+async function carAction(a: CarAction) {
+  const s = props.store
+  const res = await (() => {
+    switch (a.kind) {
+      case 'offer':
+        return tripAction(() => s.offerCar(a.tripId, a.seats, a.note), 'Car offered.')
+      case 'remove':
+        return tripAction(() => s.removeCar(a.carId))
+      case 'claim':
+        return tripAction(() => s.claimSeat(a.carId), 'Seat taken.')
+      case 'leave':
+        return tripAction(() => s.leaveSeat(a.carId))
+    }
+  })()
+  if (res && a.kind === 'offer') await focusAt(`#cars-${a.tripId}`)
+}
+
 function useResort(id: string) {
   pickResort(id)
   tab.value = 'board'
@@ -717,6 +734,7 @@ onBeforeUnmount(() => {
           @show="(r) => showOnBoard(r.start, r)"
           @announce="announce"
           @stay="stayAction"
+          @car="carAction"
         />
       </section>
 

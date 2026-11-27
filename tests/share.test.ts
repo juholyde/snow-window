@@ -8,7 +8,7 @@ const people = [p('Ana', '🏂'), p('Bo', '⛷️'), p('Cy', '🎿')]
 const trip = (over: Partial<Trip> = {}): Trip => ({
   id: 't', proposerId: 'Ana', resortId: 'cerler', start: '2027-01-02', end: '2027-01-05', title: null, note: null,
   status: 'on', createdAt: '0', responses: { Ana: 'yes', Bo: 'maybe', Cy: 'no' }, stayBudget: null, driving: null,
-  stays: [], bookedStay: null, ...over,
+  stays: [], bookedStay: null, cars: [], ...over,
 })
 const URL = 'https://x.test/#join=abc'
 

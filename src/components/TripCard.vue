@@ -6,9 +6,10 @@ import type { Person } from '../lib/overlap'
 import { downloadIcs, tripIcs } from '../lib/ics'
 import { nudgeMessage, tripSummary } from '../lib/share'
 import { shareTripCard } from '../lib/shareCard'
-import { type Answer, allGoing, coverage, nights, type StayAction, type Trip, type TripStatus, tally } from '../lib/trips'
+import { type Answer, allGoing, coverage, nights, type CarAction, type StayAction, type Trip, type TripStatus, tally } from '../lib/trips'
 import type { DayWeather } from '../lib/weather'
 import AppIcon from './AppIcon.vue'
+import CarPanel from './CarPanel.vue'
 import StayPanel from './StayPanel.vue'
 
 const props = defineProps<{
@@ -26,6 +27,7 @@ const emit = defineEmits<{
   status: [personId: string, status: TripStatus]
   show: []
   stay: [action: StayAction]
+  car: [action: CarAction]
   announce: [text: string]
 }>()
 
@@ -215,6 +217,7 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
 
       <StayPanel v-if="trip.status === 'on' && n > 0" :trip="trip" :people="people" :me="mine[0]?.id ?? null" :busy="busy" @act="(a) => emit('stay', a)" />
       <p v-else-if="trip.status === 'open' && n > 0" class="hint stay-later">Where to stay opens once {{ isMine ? 'you mark' : 'the proposer marks' }} it on.</p>
+      <CarPanel v-if="trip.status === 'on'" :trip="trip" :people="people" :me="mine[0]?.id ?? null" :busy="busy" @act="(a) => emit('car', a)" />
 
       <footer class="trip-actions">
         <button type="button" class="ghost" @click="emit('show')">Show on board</button>

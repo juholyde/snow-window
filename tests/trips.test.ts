@@ -23,7 +23,7 @@ const memory = () => {
 
 const trip = (over: Partial<Trip> = {}): Trip => ({
   id: 't', proposerId: 'a', resortId: 'cerler', start: '2027-01-02', end: '2027-01-02', title: null, note: null,
-  status: 'open', createdAt: '0', responses: {}, stayBudget: null, driving: null, stays: [], bookedStay: null, ...over,
+  status: 'open', createdAt: '0', responses: {}, stayBudget: null, driving: null, stays: [], bookedStay: null, cars: [], ...over,
 })
 
 describe('stay prompt and paste', () => {

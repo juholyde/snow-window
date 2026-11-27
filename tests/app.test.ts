@@ -252,3 +252,32 @@ it('Copy nudge names the people who have not answered, and is hidden when only I
   expect(document.querySelector('.waiting-on')).toBeNull()
   expect(buttonNamed(/Copy nudge/)).toBeUndefined()
 })
+
+it('one person offers a car and another takes a seat, then a full car stays full', async () => {
+  const seed = await seedCrew('Pyrenees gang', [
+    { id: 'ann', name: 'Ann', days: ['2026-12-05'] },
+    { id: 'ben', name: 'Ben', days: ['2026-12-05'] },
+  ])
+  await seedTrip(seed, { start: '2026-12-05', end: '2026-12-05', on: true })
+  await openApp('ann')
+  await click(tab(/Trips/))
+  await click(buttonNamed("I'm driving"))
+  await typeInto(document.querySelector('input[aria-label="Note for the car (optional)"]'), 'Leaves 7am')
+  await click(buttonNamedLabel('One seat fewer'))
+  await click(buttonNamedLabel('One seat fewer'))
+  await click(buttonNamed('Offer car'))
+  expect(text()).toContain('You drive')
+  expect(text()).toContain('1 of 1 seat free')
+  expect(buttonNamedLabel('Take a seat in the car')).toBeNull()
+
+  closeApps()
+  await openApp('ben')
+  await click(tab(/Trips/))
+  expect(text()).toContain('Ann drives')
+  await click(buttonNamedLabel('Take a seat in Ann car'))
+  expect(text()).toContain('0 of 1 seat free')
+  const car = (await storeFor('ben').loadCrew(seed.crewId)).trips[0]?.cars[0]
+  expect(car).toMatchObject({ seats: 1, note: 'Leaves 7am', riders: ['ben'] })
+  await click(buttonNamed('Leave seat'))
+  expect((await storeFor('ben').loadCrew(seed.crewId)).trips[0]?.cars[0]?.riders).toEqual([])
+})
