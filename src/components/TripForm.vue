@@ -5,6 +5,7 @@ import { formatLong } from '../lib/dates'
 import type { Person } from '../lib/overlap'
 import type { Range } from '../lib/selection'
 import { coverage, nights, type TripDraft } from '../lib/trips'
+import ResortTravel from './ResortTravel.vue'
 
 /** A suggestion: dates picked on the timeline beside it, a resort and a plan. Where to stay comes once it's on. */
 const props = defineProps<{
@@ -29,6 +30,8 @@ watch(
 )
 const d = reactive({ title: '', note: '' })
 
+const base = import.meta.env.BASE_URL
+const resort = computed(() => RESORTS.find((r) => r.id === props.resortId) ?? null)
 const n = computed(() => (props.range ? nights(props.range) : 0))
 const cover = computed(() => (props.range ? coverage(props.range, props.people) : null))
 const when = computed(() => {
@@ -47,7 +50,7 @@ function submit() {
 <template>
   <form class="composer" @submit.prevent="submit">
     <header class="pick-summary" :class="{ empty: !range }">
-      <template v-if="range">
+      <div v-if="range" class="pick-row">
         <span class="trip-len" :class="{ day: n === 0 }">
           <strong>{{ n === 0 ? 1 : n }}</strong>{{ n === 0 ? 'day' : n === 1 ? 'night' : 'nights' }}
         </span>
@@ -56,11 +59,21 @@ function submit() {
           <p>{{ when }}</p>
         </div>
         <button type="button" class="ghost small-btn" @click="emit('range', null)">Clear</button>
-      </template>
-      <template v-else>
+      </div>
+      <div v-else>
         <h2>Pick the dates</h2>
         <p>Tap the first day on the timeline, then the last. One tap is a day trip.</p>
-      </template>
+      </div>
+      <section v-if="resort" class="pick-place" :aria-label="`${resort.name}: how far`">
+        <div class="place-head">
+          <img :src="base + resort.photo.file" alt="" width="64" height="48" loading="lazy" />
+          <div>
+            <strong>{{ resort.name }}</strong>
+            <small>{{ resort.region }} · {{ resort.elevation }} m</small>
+          </div>
+        </div>
+        <ResortTravel :resort="resort" />
+      </section>
     </header>
 
     <p v-if="cover" class="cover">
