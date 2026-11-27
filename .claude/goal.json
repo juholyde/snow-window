@@ -309,7 +309,7 @@
       "id": "t21",
       "title": "Show clear errors for expired sessions and the anonymous sign-in limit",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "S",
       "flavour": [
@@ -317,7 +317,8 @@
       ],
       "milestone": "m1",
       "why": "call() throws raw Supabase messages, and the sandbox allows 30 anonymous sign-ins per hour per IP, so a group on one wifi can hit it with no explanation.",
-      "doneWhen": "Not-signed-in and rate-limit errors show a plain sign-in-again / try-later message; store test with a mocked client covers both."
+      "doneWhen": "Not-signed-in and rate-limit errors show a plain sign-in-again / try-later message; store test with a mocked client covers both.",
+      "result": "explain() in supabaseStore maps 429/over_request_rate_limit to guest_limit and 401/PGRST301/bad_jwt/session_not_found to not_signed_in; the 30s poll toasts a repeated error once; tests/supabaseStore.test.ts."
     },
     {
       "id": "t22",
@@ -447,7 +448,7 @@
       "doneWhen": "Juho chooses car seats, packing list, both or neither; a follow-up task with a migration outline is filed if any."
     }
   ],
-  "next": "t20",
+  "next": "t21",
   "questions": [
     {
       "question": "Season range",

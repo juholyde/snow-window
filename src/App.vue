@@ -112,6 +112,7 @@ async function loadMine() {
   if (pick?.id !== crewId.value) selectCrew(pick?.id ?? null)
 }
 
+let lastLoadError = ''
 async function refresh() {
   const id = crewId.value
   if (!id) return
@@ -122,13 +123,17 @@ async function refresh() {
     trips.value = board.trips
     const first = !loaded.value
     loaded.value = true
+    lastLoadError = ''
     if (first) {
       await nextTick()
       const begin = todayLocal() > SEASON.start && todayLocal() <= SEASON.end ? todayLocal() : SEASON.start
       timeline.value?.scrollToDay(begin, false)
     }
   } catch (e) {
-    say(`Couldn't load the crew: ${(e as Error).message}`, true)
+    // The poll retries every 30s: say each distinct failure once.
+    const message = (e as Error).message
+    if (message !== lastLoadError) say(`Couldn't load the crew: ${message}`, true)
+    lastLoadError = message
   }
 }
 

@@ -64,7 +64,8 @@ export interface CrewStore {
 
 /** The database's error codes (migration), in words people understand. */
 export const ERROR_COPY: Record<string, string> = {
-  not_signed_in: 'You are signed out. Reload the page to continue as a guest.',
+  not_signed_in: 'You were signed out. Reload to sign in again.',
+  guest_limit: 'Too many new guests from this network right now. Try again in an hour, or sign in with your saved account.',
   no_profile: 'Pick a name and an emoji first.',
   not_member: "You're not in that crew.",
   not_owner: 'Only the person who made the crew can do that.',

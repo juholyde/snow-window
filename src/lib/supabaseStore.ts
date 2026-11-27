@@ -7,6 +7,26 @@ import { type Answer, cleanBudget, cleanDraft, cleanStay, type StayDraft, type T
 
 const APP = 'snow_window'
 
+type Failure = { message: string; code?: string }
+
+/**
+ * Supabase errors in our words. Codes confirmed against the installed packages:
+ * auth-js `over_request_rate_limit` / `over_anonymous_sign_in_rate_limit` (HTTP 429),
+ * PostgREST 401 with `PGRST301` / `PGRST303` / "JWT expired" for a dead token, auth-js `bad_jwt`, `session_not_found`.
+ */
+export function explain(error: Failure, status?: number): Error {
+  const { code = '', message } = error
+  if (status === 429 || /over_(anonymous_sign_in_|request_)?rate_limit/.test(code) || /rate limit/i.test(message))
+    return storeError('guest_limit')
+  if (
+    status === 401 ||
+    ['PGRST301', 'PGRST303', 'bad_jwt', 'session_not_found', 'refresh_token_not_found'].includes(code) ||
+    /jwt expired/i.test(message)
+  )
+    return storeError('not_signed_in')
+  return storeError(code && code in ERROR_COPY ? code : message)
+}
+
 /** The sandbox's per-app roles in the access token (custom access token hook). */
 function appsClaim(token: string): Record<string, string> {
   const part = (token.split('.')[1] ?? '').replace(/-/g, '+').replace(/_/g, '/')
@@ -30,8 +50,8 @@ export class SupabaseStore implements CrewStore {
   ) {}
 
   private async call<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
-    const { data, error } = await this.client.schema('app_snow_window').rpc(fn, args)
-    if (error) throw storeError(error.message)
+    const { data, error, status } = await this.client.schema('app_snow_window').rpc(fn, args)
+    if (error) throw explain(error, status)
     return data as T
   }
 
@@ -39,16 +59,16 @@ export class SupabaseStore implements CrewStore {
     let { data } = await this.client.auth.getSession()
     if (!data.session) {
       const res = await this.client.auth.signInAnonymously({ options: { data: { app: APP } } })
-      if (res.error) throw storeError(res.error.message)
+      if (res.error) throw explain(res.error, res.error.status)
       data = { session: res.data.session }
     }
     let session = data.session
     // A saved account signing in for the first time may not be in the app yet.
     if (session && !appsClaim(session.access_token)[APP]) {
       const join = await this.client.schema('platform').rpc('join_app', { slug: APP })
-      if (join.error) throw storeError(join.error.message)
+      if (join.error) throw explain(join.error, join.status)
       const refreshed = await this.client.auth.refreshSession()
-      if (refreshed.error) throw storeError(refreshed.error.message)
+      if (refreshed.error) throw explain(refreshed.error, refreshed.error.status)
       session = refreshed.data.session
     }
     if (!session) throw storeError('not_signed_in')
