@@ -728,7 +728,7 @@
       "id": "t48",
       "title": "UI: home city picker, crew regions, per-person distance",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "M",
       "flavour": [
@@ -741,7 +741,8 @@
         "t45",
         "t46",
         "t47"
-      ]
+      ],
+      "result": "81eb6d6: home city picker in the profile, area toggles in the crew sheet (any member, at least one), resort chips, forecast menu and Resorts tab filtered by crew areas, 'From <city>: km · drive/fly' line, and a collapsed 'How far for each of you' list on trip cards. 82 tests; checked at 390px (child) and on desktop (lead). App push waits for Juho's live push of 20261128120000"
     }
   ],
   "next": "t17",
