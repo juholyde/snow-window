@@ -339,7 +339,7 @@
       "id": "t23",
       "title": "Show a countdown and powder watch for the next on trip",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "M",
       "flavour": [
@@ -348,7 +348,8 @@
       ],
       "milestone": "m2",
       "why": "Open-Meteo already feeds the board; days-to-go plus forecast snow on the trip days gives people a reason to open the app between plans.",
-      "doneWhen": "Board and Trips show days to go for the nearest on trip and, within the 16-day forecast, snowfall per trip day with 5 cm+ days highlighted; hidden with no forecast days."
+      "doneWhen": "Board and Trips show days to go for the nearest on trip and, within the 16-day forecast, snowfall per trip day with 5 cm+ days highlighted; hidden with no forecast days.",
+      "result": "src/lib/countdown.ts + TripCountdown.vue: days-to-go and per-day snow chips on Board (when no next-step strip) and Trips; unit tested; checked in demo."
     },
     {
       "id": "t24",
@@ -449,7 +450,7 @@
       "doneWhen": "Juho chooses car seats, packing list, both or neither; a follow-up task with a migration outline is filed if any."
     }
   ],
-  "next": "t23",
+  "next": "t24",
   "questions": [
     {
       "question": "Season range",

@@ -16,6 +16,7 @@ import {
 import type { Forecasts } from '../lib/weather'
 import AvailabilityTimeline from './AvailabilityTimeline.vue'
 import TripCard from './TripCard.vue'
+import TripCountdown from './TripCountdown.vue'
 import TripForm from './TripForm.vue'
 
 export type TripsView = 'suggest' | 'answer'
@@ -174,6 +175,7 @@ const waiting = computed(
           </p>
         </div>
       </div>
+      <TripCountdown :trips="trips" :forecasts="forecasts" />
       <TripCard
         v-for="t in visible"
         :key="t.id"

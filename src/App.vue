@@ -5,6 +5,7 @@ import AppIcon from './components/AppIcon.vue'
 import AvailabilityTimeline from './components/AvailabilityTimeline.vue'
 import BestWindows from './components/BestWindows.vue'
 import CrewSheet from './components/CrewSheet.vue'
+import TripCountdown from './components/TripCountdown.vue'
 import ResortsTab from './components/ResortsTab.vue'
 import TripsTab, { type TripsView } from './components/TripsTab.vue'
 import WelcomeCard from './components/WelcomeCard.vue'
@@ -546,6 +547,7 @@ onBeforeUnmount(() => {
             <span>{{ step.text }}</span>
             <button v-if="step.button" type="button" class="primary" @click="runStep(step.kind)">{{ step.button }}</button>
           </div>
+          <TripCountdown v-else :trips="trips" :forecasts="forecasts" />
           <div class="board-top">
             <h2 class="board-title">Availability board</h2>
             <button type="button" class="invite-button" :disabled="people.length >= MAX_PEOPLE" @click="copyInvite">
