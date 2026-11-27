@@ -194,7 +194,7 @@
       "id": "t13",
       "title": "Check Barcelona travel times against official winter 2026-27 timetables (Alsa, Avanza, Sagalés, Rodalies R3)",
       "kind": "research",
-      "status": "todo",
+      "status": "done",
       "importance": 2,
       "size": "S",
       "milestone": "m1",
@@ -202,7 +202,8 @@
       "doneWhen": "Each bus/train leg in resorts.ts matches a published 2026-27 timetable, or is marked seasonal.",
       "dependsOn": [
         "t12"
-      ]
+      ],
+      "notes": "2026-11-27: Baqueira bus 280 and train 237 confirmed on baqueira.es (were 345/350). Sierra Nevada train 450 -> 585 (450 counted only the AVE). La Molina R3 200, change (works: bus Fabra i Puig–La Garriga; Rodalies publishes no through timetable). The Sagalés SkiBus is marked seasonal (19 Dec–4 Apr, Wed/Fri/Sat/Sun). The other legs are marked checked: 'estimate' and show ≈. Sources in docs/travel-sources-2026-11-27.md. Leftover: t44."
     },
     {
       "id": "t14",
@@ -664,6 +665,21 @@
       "why": "Juho chose car seats only for t30 (2026-11-27): Barcelona crews drive up and who drives is the real coordination problem.",
       "doneWhen": "On an on trip, a member offers a car with N seats and others claim or leave a seat; migration with a cars table (trip, driver, seats, note) and seat claims, RPCs offer_car / remove_car / claim_seat / leave_seat checked like require_stay_trip, PGlite migration test; LocalStore mirrors it; app test covers claiming. Live db push is Juho's.",
       "parent": "t30"
+    },
+    {
+      "id": "t44",
+      "title": "Recheck the ≈ travel legs in a browser once 2026-27 timetables are out",
+      "kind": "research",
+      "status": "todo",
+      "importance": 1,
+      "size": "S",
+      "milestone": "m1",
+      "why": "t13 confirmed only Baqueira officially; 10 legs rest on Rome2rio or partial operator data because alsa.com, avanzabus.com, renfe.com and Rodalies serve search forms or nothing",
+      "doneWhen": "Each leg marked checked: 'estimate' in resorts.ts is either confirmed against an operator timetable (and flipped to 'official') or stays an estimate with the reason noted in docs/travel-sources-2026-11-27.md",
+      "dependsOn": [
+        "t13"
+      ],
+      "notes": "Site list under 'Still to check' in docs/travel-sources-2026-11-27.md"
     }
   ],
   "next": "t17",

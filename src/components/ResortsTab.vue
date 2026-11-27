@@ -11,13 +11,23 @@ const emit = defineEmits<{ use: [id: string] }>()
 const base = import.meta.env.BASE_URL
 
 const hm = (min: number) => `${Math.floor(min / 60)}h${String(min % 60).padStart(2, '0')}`
-type Mode = { id: 'car' | 'bus' | 'train'; label: string; leg: { minutes: number; detail: string; route: string } | null }
+type Mode = {
+  id: 'car' | 'bus' | 'train'
+  label: string
+  leg: { minutes: number; detail: string; route: string; estimate: boolean; runs?: string } | null
+}
 function modes(r: Resort): Mode[] {
   const t = r.travel
   const leg = (l: Resort['travel']['bus']) =>
-    l && { minutes: l.minutes, detail: l.kind === 'direct' ? 'direct' : 'change', route: l.route }
+    l && {
+      minutes: l.minutes,
+      detail: l.runs ? 'seasonal' : l.kind === 'direct' ? 'direct' : 'change',
+      route: l.runs ? `${l.route}. Runs ${l.runs}` : l.route,
+      estimate: l.checked === 'estimate',
+      runs: l.runs,
+    }
   return [
-    { id: 'car', label: 'Car', leg: { minutes: t.car.minutes, detail: `${t.car.km} km`, route: t.car.route } },
+    { id: 'car', label: 'Car', leg: { minutes: t.car.minutes, detail: `${t.car.km} km`, route: t.car.route, estimate: false } },
     { id: 'bus', label: 'Bus', leg: leg(t.bus) },
     { id: 'train', label: 'Train', leg: leg(t.train) },
   ]
@@ -61,11 +71,11 @@ const cards = computed(() =>
             v-for="m in modes(c.r)"
             :key="m.id"
             :class="[`t-${m.id}`, { none: !m.leg }]"
-            :title="m.leg ? `${m.label}: ${m.leg.route}` : `No ${m.label.toLowerCase()} route`"
+            :title="m.leg ? `${m.label}: ${m.leg.route}${m.leg.estimate ? ' (estimate, no 2026-27 timetable found)' : ''}` : `No ${m.label.toLowerCase()} route`"
           >
             <span class="t-icon"><AppIcon :name="m.id" :size="16" /></span>
             <span v-if="m.leg" class="t-time">
-              <strong>{{ hm(m.leg.minutes) }}</strong>
+              <strong>{{ m.leg.estimate ? '≈' : '' }}{{ hm(m.leg.minutes) }}</strong>
               <small>{{ m.leg.detail }}</small>
             </span>
             <span v-else class="t-time"><small>none</small></span>
