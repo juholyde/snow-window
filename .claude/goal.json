@@ -543,9 +543,69 @@
       "why": "The name field stops silently at 24 characters, and 20 members repeat emoji.",
       "doneWhen": "The name field shows a counter near the limit and the emoji picker marks emoji already used in the crew.",
       "parent": "t25"
+    },
+    {
+      "id": "t37",
+      "title": "Make the timeline keyboard-usable",
+      "kind": "labour",
+      "status": "doing",
+      "importance": 5,
+      "size": "M",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "t29 audit: own-row day cells are plain divs with only pointerdown, so days cannot be marked or read by keyboard (blocker); the board has 453 tab stops, ISO-date labels, and in pick mode custom trip dates are unreachable.",
+      "doneWhen": "Roving-tabindex grid with one tab stop per row; Space/Enter toggles a day, Shift+Arrow marks a range; each cell names its date and state; trip date picking works by keyboard; an App test drives marking by keys.",
+      "parent": "t29"
+    },
+    {
+      "id": "t38",
+      "title": "Keep focus after actions and announce changes",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m2",
+      "why": "t29 audit: focus drops to body after Suggest, Mark it on, Add places and Booked it; toasts and banners are v-if regions inserted with their text, which screen readers may not announce.",
+      "doneWhen": "Focus lands on a sensible target after each of those actions, and one always-mounted polite status region carries toast and banner messages; App test checks focus after Suggest.",
+      "parent": "t29"
+    },
+    {
+      "id": "t39",
+      "title": "Name the trip-flow controls and add arrow keys",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 3,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m2",
+      "why": "t29 audit: the vote button is named \"1 ⛷️\", Booked it repeats with no stay name, Suggest/Answer tabs ignore arrows, best-stretch picks lack aria-pressed, and 30 avatar radios without a name are 28 tab stops.",
+      "doneWhen": "Each of those controls has a distinct accessible name and state, the avatar picker is one radio group with arrow keys, and the Suggest/Answer tabs take arrow keys.",
+      "parent": "t29"
+    },
+    {
+      "id": "t40",
+      "title": "Finish the small a11y polish from the audit",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 2,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "t29 audit: day titles are hover-only, tally avatars are named only by title, a heading-order warning on Trips, and Options for Ana opens a dialog titled You.",
+      "doneWhen": "axe-core shows no warnings on all four tabs, and each listed item is named in visible or accessible text.",
+      "parent": "t29"
     }
   ],
-  "next": "t29",
+  "next": "t37",
   "questions": [
     {
       "question": "Season range",
