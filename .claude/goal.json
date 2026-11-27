@@ -378,15 +378,14 @@
       ],
       "milestone": "m1",
       "why": "Success needs a real group on phones; drag-to-mark, range picks and 20 rows of 24-character names were never tried together at 390px.",
-      "doneWhen": "Playwright on a local seeded demo at 390px: a fresh guest joins by link, marks days, suggests and answers; a 20-member long-name crew renders without overflow; screenshots kept and friction filed as tasks."
-,
+      "doneWhen": "Playwright on a local seeded demo at 390px: a fresh guest joins by link, marks days, suggests and answers; a 20-member long-name crew renders without overflow; screenshots kept and friction filed as tasks.",
       "result": "Walked join, tap and drag marking, suggest and answer at 390px with a 20-person long-name crew: no horizontal overflow; fixed clipped answer cards; 10 screenshots and 11 friction points in docs/walkthrough/2026-11-27."
     },
     {
       "id": "t26",
       "title": "Celebrate when everyone says Going",
       "kind": "labour",
-      "status": "todo",
+      "status": "doing",
       "importance": 3,
       "size": "S",
       "flavour": [
@@ -451,9 +450,99 @@
       "milestone": "m2",
       "why": "Barcelona crews drive up; seats and who-brings-what need new tables, so confirm it is wanted first.",
       "doneWhen": "Juho chooses car seats, packing list, both or neither; a follow-up task with a migration outline is filed if any."
+    },
+    {
+      "id": "t31",
+      "title": "Show more of each name on the Board",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "t25 walkthrough: at 390px 19 of 20 names cut to about 8 characters, and two Ingebor… rows look identical (docs/walkthrough/2026-11-27).",
+      "doneWhen": "At 390px the name column shows 12+ characters or tapping a name shows it in full; screenshot with the 20-member seed.",
+      "parent": "t25"
+    },
+    {
+      "id": "t32",
+      "title": "Bring a new guest's own row into view on join",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "M",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "t25 walkthrough: only about 6 of 20 rows fit on a phone and the joiner's row is last.",
+      "doneWhen": "A guest joining a 20-member crew at 390px lands with their own row visible (scrolled to or pinned), checked in Playwright.",
+      "parent": "t25"
+    },
+    {
+      "id": "t33",
+      "title": "Raise primary tap targets to 40px",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 3,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m2",
+      "why": "t25 walkthrough measured Suggest/Answer 34px, Going/Maybe/Can't 38, tabs 38, Driving 26, Copy prompt 30.",
+      "doneWhen": "Every primary control measures at least 40px tall at 390px; listed in the walkthrough README.",
+      "parent": "t25"
+    },
+    {
+      "id": "t34",
+      "title": "Show the new trip right after Suggest",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 3,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m2",
+      "why": "t25 walkthrough: Suggest lands on Answer with the new trip out of view.",
+      "doneWhen": "After suggesting, the new trip card scrolls into view and is briefly highlighted; app test covers it.",
+      "parent": "t25"
+    },
+    {
+      "id": "t35",
+      "title": "Check own-row drag against vertical scroll on a real phone",
+      "kind": "clarify",
+      "status": "todo",
+      "importance": 3,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "The own row uses touch-action none, which may stop a vertical scroll that starts on it; Playwright used mouse events only.",
+      "doneWhen": "Juho tries the live board on his phone; scroll from the own row works or a fix is filed.",
+      "parent": "t25"
+    },
+    {
+      "id": "t36",
+      "title": "Hint the name length and steer away from duplicate emoji",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 2,
+      "size": "S",
+      "flavour": [
+        "fun"
+      ],
+      "milestone": "m1",
+      "why": "The name field stops silently at 24 characters, and 20 members repeat emoji.",
+      "doneWhen": "The name field shows a counter near the limit and the emoji picker marks emoji already used in the crew.",
+      "parent": "t25"
     }
   ],
-  "next": "t25",
+  "next": "t26",
   "questions": [
     {
       "question": "Season range",
