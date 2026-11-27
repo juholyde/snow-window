@@ -47,6 +47,7 @@ describe('stay prompt and paste', () => {
       'STAY | Hotel Tuca | https://example.com/tuca | €62,50 | Ski-in, ski-out',
       '- stay | Flat in Vielha | [book](https://example.com/vielha) | 38 | Cheap, 15 min drive | sleeps 6',
       'STAY | Refugi | no link | ? |',
+      '3. **STAY | Lodge | https://example.com/lodge | 55 | Has a sauna.**',
       '```',
       'Enjoy!',
     ].join('\n')
@@ -54,6 +55,7 @@ describe('stay prompt and paste', () => {
       { name: 'Hotel Tuca', url: 'https://example.com/tuca', price: 63, why: 'Ski-in, ski-out' },
       { name: 'Flat in Vielha', url: 'https://example.com/vielha', price: 38, why: 'Cheap, 15 min drive | sleeps 6' },
       { name: 'Refugi', url: null, price: null, why: null },
+      { name: 'Lodge', url: 'https://example.com/lodge', price: 55, why: 'Has a sauna.' },
     ])
     expect(() => parseStays('Sorry, I cannot browse.')).toThrow(/STAY/)
   })

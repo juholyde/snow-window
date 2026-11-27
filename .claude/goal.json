@@ -258,7 +258,7 @@
       "why": "The suggest form asked for a place before anyone agreed on dates; native dropdowns and date pickers clashed with the app.",
       "doneWhen": "Migration 20261126120000 live in the sandbox, app pushed, a stay pasted on the live site.",
       "dependsOn": [],
-      "note": "2026-11-26: migration 20261126120000 live (tables, gates, 6 functions checked; API sees them), app a40c90f deployed. Left: one real trip marked on with a pasted stay on the live site."
+      "note": "2026-11-26: migration 20261126120000 live (tables, gates, 6 functions checked; API sees them), app a40c90f deployed. Left: one real trip marked on with a pasted stay on the live site. 2026-11-27: full flow checked in demo mode with mock places (suggest, mark on, budget/driving, copy prompt, bad paste error, paste 3 STAY lines, vote, book, reopen keeps data, mobile 375px). Found and fixed: numbered '3. STAY' lines were dropped and trailing '**' kept. Left: Juho's own live try."
     }
   ],
   "next": "t17",

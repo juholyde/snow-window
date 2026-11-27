@@ -113,7 +113,8 @@ export function stayPrompt(trip: Trip, people: readonly Person[]): string {
 export function parseStays(text: string): StayDraft[] {
   const out: StayDraft[] = []
   for (const raw of text.split(/\r?\n/)) {
-    const line = raw.replace(/^[\s>*`-]+/, '').trim()
+    // Strip list markers ("- ", "3. ", "> ") and markdown wrappers ("**", "`") around the line.
+    const line = raw.replace(/^(?:[\s>*`_-]|\d+[.)])+/, '').replace(/[\s*`_]+$/, '')
     if (!/^stay\s*\|/i.test(line)) continue
     const [, name = '', url = '', price = '', ...why] = line.split('|').map((c) => c.trim())
     const link = /https:\/\/[^\s<>)\]]+/.exec(url)?.[0] ?? null
