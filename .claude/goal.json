@@ -680,6 +680,65 @@
         "t13"
       ],
       "notes": "Site list under 'Still to check' in docs/travel-sources-2026-11-27.md"
+    },
+    {
+      "id": "t45",
+      "title": "Add regions and new resorts: Alps, Finland, Sweden",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "L",
+      "flavour": [
+        "fun",
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "Juho 2026-11-27: crews suggest from Spain, the Alps, Finland and Sweden, not only Spain",
+      "doneWhen": "Each resort in resorts.ts has a region (spain = Spain + Andorra, alps, finland, sweden). About 8 big Alps resorts across FR/CH/AT/IT, 5 in Finland (Levi, Ylläs, Ruka, Pyhä, Saariselkä) and 5 in Sweden (Åre, Sälen, Vemdalen, Riksgränsen, Idre) are added with coordinates, elevation, a Wikimedia Commons photo with credit, and webcam links checked. Forecasts load for all of them; tests pass"
+    },
+    {
+      "id": "t46",
+      "title": "Compute per-person distance and travel hints from a home city",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "Each person's distance to a resort follows from where they live; chosen: computed in the browser, no routing service",
+      "doneWhen": "src/lib/distance.ts gives straight-line km, a road estimate and a drive time, or a 'fly' hint past a set distance, from a city to a resort. A fixed list of about 40 home cities (Barcelona, Madrid, Helsinki, Stockholm, Munich, Geneva, London…) lives in config. Tested; Barcelona's checked bus and train times still show for Barcelona-based people"
+    },
+    {
+      "id": "t47",
+      "title": "Migration: home city on profiles, regions on crews",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "M",
+      "milestone": "m1",
+      "why": "The home city and the crew's regions must be shared across devices and crew members; chosen: any member edits regions, default Spain",
+      "doneWhen": "Migration adds profiles.home_city (a city id, length-checked) and crews.regions (text[], a non-empty subset of spain/alps/finland/sweden, default {spain}). RPCs set_home_city and set_crew_regions (any member) exist, and get_crew returns both. PGlite migration tests cover the checks and member-only edits; the dry run lists exactly this migration for Juho's live push"
+    },
+    {
+      "id": "t48",
+      "title": "UI: home city picker, crew regions, per-person distance",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 4,
+      "size": "M",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "Brings t45–t47 to the crew: pick where you live, pick where the crew skis, and see how far each place is for each person",
+      "doneWhen": "The profile has a home city picker and the crew sheet has region toggles. Resort chips, forecasts and the Resorts tab show only the crew's regions. The trip form's resort block and resort cards show my distance, and a trip card lists each member's km and drive or fly hint. LocalStore mirrors the rules; App tests cover region filtering; checked at 390px and on desktop",
+      "dependsOn": [
+        "t45",
+        "t46",
+        "t47"
+      ]
     }
   ],
   "next": "t17",
@@ -731,6 +790,11 @@
       "answer": "Car seats only: drivers offer seats, others claim them; no packing list.",
       "topic": "scope",
       "at": "2026-11-27"
+    },
+    {
+      "date": "2026-11-27",
+      "q": "Regions, home location, distance and who picks regions",
+      "a": "About 6 big resorts per region (Alps about 8, Finland 5, Sweden 5); home city picked from a fixed list; km plus a rough car or flight hint computed in the browser; regions are a crew setting any member edits, defaulting to Spain"
     }
   ],
   "sideQuests": []
