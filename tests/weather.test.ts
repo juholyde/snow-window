@@ -50,4 +50,16 @@ describe('loadForecasts', () => {
     expect(later.a?.['2026-12-01']?.snowCm).toBe(5)
     await expect(loadForecasts([resort('a')], memory(), down as typeof fetch)).rejects.toThrow(/503/)
   })
+
+  it('ignores a cache built for other resort ids', async () => {
+    const storage = memory()
+    const ok = vi.fn(async () => new Response(JSON.stringify(place(5))))
+    await loadForecasts([resort('a')], storage, ok as typeof fetch, 0)
+    const two = vi.fn(async () => new Response(JSON.stringify([place(1), place(2)])))
+    const f = await loadForecasts([resort('b'), resort('a')], storage, two as typeof fetch, 60_000)
+    expect(two).toHaveBeenCalledTimes(1)
+    expect(Object.keys(f).sort()).toEqual(['a', 'b'])
+    await loadForecasts([resort('a'), resort('b')], storage, two as typeof fetch, 120_000)
+    expect(two).toHaveBeenCalledTimes(1)
+  })
 })

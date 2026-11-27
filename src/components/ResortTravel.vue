@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { Leg, Resort } from '../config/resorts'
 import AppIcon from './AppIcon.vue'
 
-/** Car, bus and train from Barcelona for one resort, plus its travel note. */
+/** Car, bus and train from Barcelona for one resort, plus its travel note. Renders nothing for resorts without checked travel data. */
 const props = defineProps<{ resort: Resort }>()
 
 const hm = (min: number) => `${Math.floor(min / 60)}h${String(min % 60).padStart(2, '0')}`
@@ -21,6 +21,7 @@ const leg = (l: Leg) =>
   }
 const modes = computed<Mode[]>(() => {
   const t = props.resort.travel
+  if (!t) return []
   return [
     { id: 'car', label: 'Car', leg: { minutes: t.car.minutes, detail: `${t.car.km} km`, route: t.car.route, estimate: false } },
     { id: 'bus', label: 'Bus', leg: leg(t.bus) },
@@ -30,6 +31,7 @@ const modes = computed<Mode[]>(() => {
 </script>
 
 <template>
+  <template v-if="resort.travel">
   <ul class="travel" :aria-label="`Getting to ${resort.name} from Barcelona`">
     <li
       v-for="m in modes"
@@ -46,4 +48,5 @@ const modes = computed<Mode[]>(() => {
     </li>
   </ul>
   <p v-if="resort.travel.note" class="t-note">{{ resort.travel.note }}</p>
+  </template>
 </template>
