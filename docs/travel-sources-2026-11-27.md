@@ -19,7 +19,21 @@ Legs that run only in season or on some days carry `runs`.
 | Sierra Nevada | Bus | 890 | estimate | Alsa coach about 12h45 (Movelia). Tocina bus up from autotransportetocina.es/sierra-nevada2 (official, undated): Granada 08:00, 10:15 and 17:15, plus 15:00 at weekends |
 | Sierra Nevada | Train | 585 (was 450) | estimate | AVE 08:30 Sants to 15:38 Granada (Omio snapshot), then the 17:15 Tocina bus up. The old 450 counted the train only |
 
-Car to Baqueira: 266 min (was 230), from the same baqueira.es page ("Coche 4h 26m": A-2, A-14, then N-230 via Benabarre and Vielha). The other car times were not checked.
+## Car
+
+The resort pages give no driving time from Barcelona, except Baqueira's. For the other resorts the time is the average of two routing engines (OSRM and Valhalla, OpenStreetMap data), rounded to 5 min. The trip runs from Plaça de Catalunya to the base station. These are free-flow times: add time for traffic, snow and chains.
+
+| Resort | km | min | Was | OSRM | Valhalla |
+|---|---|---|---|---|---|
+| Baqueira | 320 | 266 | 230 | 282 km / 241 min | 291 km / 241 min |
+| La Molina | 155 | 120 | 110 | 150 / 121 | 158 / 121 |
+| Grandvalira (Soldeu) | 195 | 170 | 160 | 192 / 167 | 200 / 168 |
+| Pal Arinsal | 200 | 175 | 160 | 202 / 176 | 225 / 209 |
+| Formigal | 350 (was 400) | 255 | 255 | 350 / 262 | 355 / 246 |
+| Cerler | 305 | 250 | 230 | 301 / 256 | 307 / 244 |
+| Sierra Nevada | 875 | 580 | 525 | 864 / 601 | 889 / 554 |
+
+Baqueira's figure is from baqueira.es ("Coche 4h 26m", via Lleida, the A-14, the N-230 and the Vielha tunnel). Both engines route over the Port de la Bonaigua (C-13/C-28), which often closes in winter, so the resort's figure stays. Pal Arinsal uses OSRM: its route via the Cadí tunnel and La Seu is the usual one, and Valhalla took a longer road.
 
 Flight Barcelona–Granada: Vueling nonstop, 1h35–1h40. The note stays.
 
