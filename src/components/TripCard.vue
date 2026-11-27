@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RESORTS } from '../config/resorts'
 import { addDays, type Day, formatLong } from '../lib/dates'
 import type { Person } from '../lib/overlap'
+import { tripSummary } from '../lib/share'
 import { type Answer, coverage, nights, type StayAction, type Trip, type TripStatus, tally } from '../lib/trips'
 import type { DayWeather } from '../lib/weather'
 import AppIcon from './AppIcon.vue'
@@ -14,6 +15,8 @@ const props = defineProps<{
   mine: Person[]
   forecast: Record<Day, DayWeather> | null
   busy: boolean
+  crewName: string
+  crewUrl: string
 }>()
 const emit = defineEmits<{
   respond: [personId: string, answer: Answer]
@@ -45,6 +48,21 @@ const snow = computed(() => {
   }
   return known ? cm : null
 })
+
+const copied = ref(false)
+let copiedTimer: ReturnType<typeof setTimeout> | undefined
+async function copySummary() {
+  const text = tripSummary(props.trip, props.people, props.crewName, props.crewUrl)
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch {
+    window.prompt('Copy this summary:', text)
+    return
+  }
+  copied.value = true
+  clearTimeout(copiedTimer)
+  copiedTimer = setTimeout(() => (copied.value = false), 2500)
+}
 
 const base = import.meta.env.BASE_URL
 const unanswered = computed(() => !closed.value && props.mine.some((p) => !props.trip.responses[p.id]))
@@ -129,6 +147,9 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
 
       <footer class="trip-actions">
         <button type="button" class="ghost" @click="emit('show')">Show on board</button>
+        <button v-if="trip.status === 'on'" type="button" class="ghost" @click="copySummary">
+          <AppIcon :name="copied ? 'check' : 'copy'" :size="15" /> {{ copied ? 'Summary copied' : 'Copy summary' }}
+        </button>
         <template v-if="isMine">
           <button v-if="trip.status === 'open'" type="button" class="primary" @click="emit('status', trip.proposerId, 'on')">
             Mark it on

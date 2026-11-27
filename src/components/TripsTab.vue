@@ -32,6 +32,8 @@ const props = defineProps<{
   resortId: string
   range: Range | null
   busy: boolean
+  crewName: string
+  crewUrl: string
 }>()
 const emit = defineEmits<{
   view: [view: TripsView]
@@ -180,6 +182,8 @@ const waiting = computed(
         :mine="mine"
         :forecast="forecasts?.[t.resortId] ?? null"
         :busy="busy"
+        :crew-name="crewName"
+        :crew-url="crewUrl"
         @stay="(a) => emit('stay', a)"
         @respond="(pid, a) => emit('respond', t.id, pid, a)"
         @status="(pid, s) => emit('status', t.id, pid, s)"

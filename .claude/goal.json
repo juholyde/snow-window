@@ -279,7 +279,7 @@
       "id": "t19",
       "title": "Copy a WhatsApp-ready trip summary and invite message",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 5,
       "size": "M",
       "flavour": [
@@ -287,7 +287,8 @@
       ],
       "milestone": "m2",
       "why": "The crew lives in WhatsApp; an on trip has no copyable text and the invite is a bare link.",
-      "doneWhen": "Copy summary on an on trip gives dates, resort, who is going, the booked stay and the crew link; Copy invite link adds a short message with the crew name; pure formatter with unit tests."
+      "doneWhen": "Copy summary on an on trip gives dates, resort, who is going, the booked stay and the crew link; Copy invite link adds a short message with the crew name; pure formatter with unit tests.",
+      "result": "src/lib/share.ts tripSummary + inviteMessage (tests/share.test.ts); Copy summary button on on-trip cards, Copy invite link now copies message + link."
     },
     {
       "id": "t20",
@@ -445,7 +446,7 @@
       "doneWhen": "Juho chooses car seats, packing list, both or neither; a follow-up task with a migration outline is filed if any."
     }
   ],
-  "next": "t18",
+  "next": "t19",
   "questions": [
     {
       "question": "Season range",

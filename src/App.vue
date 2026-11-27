@@ -13,6 +13,7 @@ import { RESORTS } from './config/resorts'
 import { type Day, eachDay, formatDayMonth, formatLong, todayLocal } from './lib/dates'
 import { countByDay, markDay, type Person, type TripWindow } from './lib/overlap'
 import { MAX_PEOPLE } from './lib/rules'
+import { inviteMessage } from './lib/share'
 import { type Range, span } from './lib/selection'
 import { type Crew, type CrewPreview, type CrewStore, inviteLink, parseInvite, type Session, storeError } from './lib/store'
 import { type Answer, awaitingAnswer, MAX_TRIP_DAYS, type StayAction, type Trip, type TripDraft, type TripStatus } from './lib/trips'
@@ -213,14 +214,16 @@ async function change(id: string, next: Day[]) {
   }
 }
 
+const crewUrl = computed(() => (crew.value ? inviteLink(location.origin + location.pathname, crew.value.inviteCode) : ''))
+
 async function copyInvite() {
   if (!crew.value) return
-  const link = inviteLink(location.origin + location.pathname, crew.value.inviteCode)
+  const link = crewUrl.value
   try {
-    await navigator.clipboard.writeText(link)
-    say('Invite link copied. Anyone who opens it can join the crew.')
+    await navigator.clipboard.writeText(inviteMessage(crew.value.name, link))
+    say('Invite message copied. Anyone who opens it can join the crew.')
   } catch {
-    window.prompt('Copy this invite link:', link)
+    window.prompt('Copy this invite message:', inviteMessage(crew.value.name, link))
   }
 }
 
@@ -620,6 +623,8 @@ onBeforeUnmount(() => {
           :resort-id="resortId"
           :range="tripRange"
           :busy="busy"
+          :crew-name="crew?.name ?? ''"
+          :crew-url="crewUrl"
           @view="(v) => (tripsPicked = v)"
           @range="(r) => (tripRange = r)"
           @create="createTrip"
