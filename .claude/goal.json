@@ -653,7 +653,7 @@
       "title": "Add car seats to trips that are on",
       "kind": "labour",
       "status": "done",
-      "result": "Cars on on-trips (day trips too): CarPanel, offer_car/remove_car/claim_seat/leave_seat, LocalStore mirror, migration and app tests; live db push of 20261127120000 is pending (Juho).",
+      "result": "Cars section on on-trips (offer with seats, take/leave a seat, remove). Migration 20261127120000 live 2026-11-27 (Juho pushed; tables with RLS + app_gate, 4 RPCs answer not_member for fake ids); app 885eee8 deployed.",
       "importance": 3,
       "size": "M",
       "flavour": [
@@ -666,7 +666,7 @@
       "parent": "t30"
     }
   ],
-  "next": "t43",
+  "next": "t17",
   "questions": [
     {
       "question": "Season range",
