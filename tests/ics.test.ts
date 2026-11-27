@@ -32,6 +32,10 @@ describe('trip ics', () => {
     expect(flat).toContain('SUMMARY:🏂 a\\,b\\;c\\\\d\r\n')
     expect(flat).toMatch(/DESCRIPTION:.*\\n.*Stay: Chalet\\, "Nice"\\; ok https:\/\/stay\.test\/x/)
   })
+  it('puts the plan in the description', () => {
+    const flat = make(trip({ note: 'Sauna; then tapas' })).replace(/\r\n /g, '')
+    expect(flat).toMatch(/DESCRIPTION:.*\\n\\nSauna\\; then tapas\r\n/)
+  })
   it('folds lines over 75 octets without splitting characters', () => {
     const enc = new TextEncoder()
     for (const l of make().split('\r\n')) expect(enc.encode(l).length).toBeLessThanOrEqual(75)
