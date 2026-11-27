@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RESORTS } from '../config/resorts'
 import { addDays, type Day, formatLong } from '../lib/dates'
 import type { Person } from '../lib/overlap'
 import { downloadIcs, tripIcs } from '../lib/ics'
 import { tripSummary } from '../lib/share'
-import { type Answer, coverage, nights, type StayAction, type Trip, type TripStatus, tally } from '../lib/trips'
+import { type Answer, allGoing, coverage, nights, type StayAction, type Trip, type TripStatus, tally } from '../lib/trips'
 import type { DayWeather } from '../lib/weather'
 import AppIcon from './AppIcon.vue'
 import StayPanel from './StayPanel.vue'
@@ -31,6 +31,27 @@ const proposer = computed(() => props.people.find((p) => p.id === props.trip.pro
 const n = computed(() => nights(props.trip))
 const cover = computed(() => coverage(props.trip, props.people))
 const t = computed(() => tally(props.trip, props.people))
+const everyoneGoing = computed(() => allGoing(props.trip, props.people))
+
+// One-time per trip per device: the first time this device sees the trip all Going.
+const celebrate = ref(false)
+watch(
+  everyoneGoing,
+  (yes) => {
+    if (!yes) return
+    const key = `snow-window:celebrated:${props.trip.id}`
+    try {
+      if (localStorage.getItem(key)) return
+      localStorage.setItem(key, '1')
+    } catch {
+      // Storage blocked: skip the party rather than repeat it on every visit.
+      return
+    }
+    celebrate.value = true
+  },
+  { immediate: true },
+)
+const FLAKES = Array.from({ length: 14 }, (_, i) => ({ x: (i * 37) % 100, delay: (i % 5) * 0.25, size: 4 + (i % 3) * 2 }))
 const isMine = computed(() => props.mine.some((p) => p.id === props.trip.proposerId))
 const closed = computed(() => props.trip.status === 'cancelled')
 const dates = computed(() =>
@@ -108,6 +129,15 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
         <span v-else-if="closed" class="badge off">Cancelled</span>
         <span v-else-if="unanswered" class="badge ask">Your answer?</span>
       </header>
+
+      <aside v-if="celebrate" class="celebrate" role="status">
+        <span class="flakes" aria-hidden="true">
+          <i v-for="(f, i) in FLAKES" :key="i" :style="{ left: `${f.x}%`, animationDelay: `${f.delay}s`, width: `${f.size}px`, height: `${f.size}px` }" />
+        </span>
+        <img :src="`${base}art/rufus-snowboard@512.png`" alt="" width="64" height="64" />
+        <p><strong>Everyone's in!</strong> The whole crew said Going.</p>
+        <button type="button" class="ghost" aria-label="Dismiss" @click="celebrate = false">Nice</button>
+      </aside>
 
       <div v-if="!closed && mine.length" class="answer-rows">
         <div v-for="me in mine" :key="me.id" class="answer-row">

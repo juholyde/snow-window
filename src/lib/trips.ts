@@ -146,6 +146,11 @@ export function tally(t: Trip, people: readonly Person[]): Tally {
   return out
 }
 
+/** Everyone in the crew (at least two) has said Going, and the trip is not cancelled. */
+export function allGoing(t: Trip, people: readonly Person[]): boolean {
+  return t.status !== 'cancelled' && people.length >= 2 && people.every((p) => t.responses[p.id] === 'yes')
+}
+
 /** On first, then open, then cancelled; newest first within each. */
 export function sortTrips(trips: readonly Trip[]): Trip[] {
   const rank: Record<TripStatus, number> = { on: 0, open: 1, cancelled: 2 }

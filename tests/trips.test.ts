@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Person } from '../src/lib/overlap'
 import { LocalStore } from '../src/lib/store'
-import { awaitingAnswer, cleanDraft, coverage, parseStays, sortTrips, stayPrompt, type Trip, type TripDraft, tally } from '../src/lib/trips'
+import { allGoing, awaitingAnswer, cleanDraft, coverage, parseStays, sortTrips, stayPrompt, type Trip, type TripDraft, tally } from '../src/lib/trips'
 
 const person = (id: string, days: string[]): Person => ({ id, name: id, emoji: '🏂', days })
 const draft = (over: Partial<TripDraft> = {}): TripDraft => ({
@@ -128,4 +128,14 @@ describe('awaitingAnswer', () => {
     expect(awaitingAnswer(trips, 'me')).toBe(2)
     expect(awaitingAnswer(trips.map((t) => ({ ...t, responses: { ...t.responses, me: 'maybe' } })), 'me')).toBe(0)
   })
+})
+
+it('allGoing needs two or more people, all yes, and a trip that is not cancelled', () => {
+  const people = [person('a', []), person('b', [])]
+  const go = (responses: Trip['responses'], status: Trip['status'] = 'open') => ({ ...trip(), status, responses })
+  expect(allGoing(go({ a: 'yes', b: 'yes' }), people)).toBe(true)
+  expect(allGoing(go({ a: 'yes', b: 'maybe' }), people)).toBe(false)
+  expect(allGoing(go({ a: 'yes' }), people)).toBe(false)
+  expect(allGoing(go({ a: 'yes', b: 'yes' }, 'cancelled'), people)).toBe(false)
+  expect(allGoing(go({ a: 'yes' }), [people[0] as Person])).toBe(false)
 })

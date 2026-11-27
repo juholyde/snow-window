@@ -122,3 +122,26 @@ it('pasted STAY lines become places, a vote counts, and Booked it shows the book
   const booked = (await storeFor('ann').loadCrew(seed.crewId)).trips[0]
   expect(booked?.stays.find((s) => s.id === booked.bookedStay)?.name).toBe('Chalet Aran')
 })
+
+it('the last Going shows the Rufus banner once, and it does not come back after dismissing', async () => {
+  const seed = await seedCrew('Pyrenees gang', [
+    { id: 'ann', name: 'Ann', days: ['2026-12-05', '2026-12-06'] },
+    { id: 'ben', name: 'Ben', days: ['2026-12-05', '2026-12-06'] },
+  ])
+  await seedTrip(seed, { start: '2026-12-05', end: '2026-12-06' })
+  await storeFor('ann').respond((await storeFor('ann').loadCrew(seed.crewId)).trips[0]?.id ?? '', 'yes')
+  const app = await openApp('ben')
+  await click(tab(/Trips/))
+  expect(document.querySelector('.celebrate')).toBeNull()
+
+  await click(buttonNamed('Going'))
+  expect(document.querySelector('.celebrate')).not.toBeNull()
+  expect(document.querySelector('.celebrate img')?.getAttribute('src')).toContain('rufus-snowboard')
+
+  await click(document.querySelector('.celebrate button'))
+  expect(document.querySelector('.celebrate')).toBeNull()
+  app.unmount()
+  await openApp('ben')
+  await click(tab(/Trips/))
+  expect(document.querySelector('.celebrate')).toBeNull()
+})

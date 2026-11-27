@@ -385,7 +385,7 @@
       "id": "t26",
       "title": "Celebrate when everyone says Going",
       "kind": "labour",
-      "status": "doing",
+      "status": "done",
       "importance": 3,
       "size": "S",
       "flavour": [
@@ -393,7 +393,8 @@
       ],
       "milestone": "m2",
       "why": "The moment a trip locks in is the high point, and Rufus's art is unused there.",
-      "doneWhen": "When the tally turns all Going the card shows a one-time Rufus banner with snowfall, respecting prefers-reduced-motion; test covers the trigger."
+      "doneWhen": "When the tally turns all Going the card shows a one-time Rufus banner with snowfall, respecting prefers-reduced-motion; test covers the trigger.",
+      "result": "Rufus banner with CSS snowfall (reduced-motion: banner only) on first all-Going sight per trip per device; allGoing() + tests."
     },
     {
       "id": "t27",
@@ -542,7 +543,7 @@
       "parent": "t25"
     }
   ],
-  "next": "t26",
+  "next": "t27",
   "questions": [
     {
       "question": "Season range",
