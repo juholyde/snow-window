@@ -324,7 +324,7 @@
       "id": "t22",
       "title": "Add to calendar (.ics) for trips that are on",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "S",
       "flavour": [
@@ -332,7 +332,8 @@
       ],
       "milestone": "m2",
       "why": "A decided trip should land in everyone's phone calendar; needs no server.",
-      "doneWhen": "An on trip offers a download of a valid all-day .ics with resort, plan and stay link; unit test covers the exclusive end date; opens in Apple Calendar."
+      "doneWhen": "An on trip offers a download of a valid all-day .ics with resort, plan and stay link; unit test covers the exclusive end date; opens in Apple Calendar.",
+      "result": "src/lib/ics.ts tripIcs + 'Add to calendar' on on-trips; event spans start..end inclusive, DTEND = end+1; structure tested, not opened in Apple Calendar."
     },
     {
       "id": "t23",
@@ -448,7 +449,7 @@
       "doneWhen": "Juho chooses car seats, packing list, both or neither; a follow-up task with a migration outline is filed if any."
     }
   ],
-  "next": "t21",
+  "next": "t23",
   "questions": [
     {
       "question": "Season range",

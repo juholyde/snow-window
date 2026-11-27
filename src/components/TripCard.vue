@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { RESORTS } from '../config/resorts'
 import { addDays, type Day, formatLong } from '../lib/dates'
 import type { Person } from '../lib/overlap'
+import { downloadIcs, tripIcs } from '../lib/ics'
 import { tripSummary } from '../lib/share'
 import { type Answer, coverage, nights, type StayAction, type Trip, type TripStatus, tally } from '../lib/trips'
 import type { DayWeather } from '../lib/weather'
@@ -62,6 +63,10 @@ async function copySummary() {
   copied.value = true
   clearTimeout(copiedTimer)
   copiedTimer = setTimeout(() => (copied.value = false), 2500)
+}
+
+function addToCalendar() {
+  downloadIcs(props.trip, tripIcs(props.trip, props.people, props.crewName, props.crewUrl))
 }
 
 const base = import.meta.env.BASE_URL
@@ -149,6 +154,9 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
         <button type="button" class="ghost" @click="emit('show')">Show on board</button>
         <button v-if="trip.status === 'on'" type="button" class="ghost" @click="copySummary">
           <AppIcon :name="copied ? 'check' : 'copy'" :size="15" /> {{ copied ? 'Summary copied' : 'Copy summary' }}
+        </button>
+        <button v-if="trip.status === 'on'" type="button" class="ghost" @click="addToCalendar">
+          <AppIcon name="calendar" :size="15" /> Add to calendar
         </button>
         <template v-if="isMine">
           <button v-if="trip.status === 'open'" type="button" class="primary" @click="emit('status', trip.proposerId, 'on')">
