@@ -355,7 +355,7 @@
       "id": "t24",
       "title": "Test the app flows as components against LocalStore",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "M",
       "flavour": [
@@ -363,7 +363,8 @@
       ],
       "milestone": "m1",
       "why": "Only logic and migration tests exist; App.vue holds the poll, invite and act() flows untested.",
-      "doneWhen": "Vitest with happy-dom covers mark days, join by invite, answer a trip and book a stay against LocalStore; full suite passes."
+      "doneWhen": "Vitest with happy-dom covers mark days, join by invite, answer a trip and book a stay against LocalStore; full suite passes.",
+      "result": "tests/app.test.ts mounts App on LocalStore under happy-dom: mark days, join by #join link, answer Going, paste STAY + vote + Booked it; each fails if its App.vue handler is stubbed."
     },
     {
       "id": "t25",
@@ -450,7 +451,7 @@
       "doneWhen": "Juho chooses car seats, packing list, both or neither; a follow-up task with a migration outline is filed if any."
     }
   ],
-  "next": "t24",
+  "next": "t25",
   "questions": [
     {
       "question": "Season range",
