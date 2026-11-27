@@ -716,12 +716,13 @@
       "id": "t47",
       "title": "Migration: home city on profiles, regions on crews",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "M",
       "milestone": "m1",
       "why": "The home city and the crew's regions must be shared across devices and crew members; chosen: any member edits regions, default Spain",
-      "doneWhen": "Migration adds profiles.home_city (a city id, length-checked) and crews.regions (text[], a non-empty subset of spain/alps/finland/sweden, default {spain}). RPCs set_home_city and set_crew_regions (any member) exist, and get_crew returns both. PGlite migration tests cover the checks and member-only edits; the dry run lists exactly this migration for Juho's live push"
+      "doneWhen": "Migration adds profiles.home_city (a city id, length-checked) and crews.regions (text[], a non-empty subset of spain/alps/finland/sweden, default {spain}). RPCs set_home_city and set_crew_regions (any member) exist, and get_crew returns both. PGlite migration tests cover the checks and member-only edits; the dry run lists exactly this migration for Juho's live push",
+      "result": "71e0ba2: migration 20261128120000 (resort check widened to 25 ids, profiles.home_city, crews.regions default {spain}, set_home_city, set_crew_regions; get_profile/get_crew/my_crews return them) + store methods; 80 tests. Dry run lists exactly this migration; live push is Juho's"
     },
     {
       "id": "t48",
