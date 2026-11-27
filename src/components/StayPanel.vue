@@ -115,6 +115,7 @@ function addPasted() {
             type="button"
             class="vote"
             :aria-pressed="me !== null && s.votes.includes(me)"
+            :aria-label="`Vote for ${s.name} (${s.votes.length} ${s.votes.length === 1 ? 'vote' : 'votes'})`"
             :disabled="busy || !me"
             :title="s.votes.map((v) => nameOf(v)?.name ?? 'someone').join(', ') || 'No votes yet'"
             @click="emit('act', { kind: 'vote', stayId: s.id, vote: !(me && s.votes.includes(me)) })"
@@ -127,12 +128,13 @@ function addPasted() {
             type="button"
             class="ghost small-btn"
             data-book
+            :aria-label="`Mark ${s.name} as booked`"
             :disabled="busy"
             @click="emit('act', { kind: 'book', tripId: trip.id, stayId: s.id })"
           >
             Booked it
           </button>
-          <button v-else type="button" class="ghost small-btn" data-book :disabled="busy" @click="emit('act', { kind: 'book', tripId: trip.id, stayId: null })">
+          <button v-else type="button" class="ghost small-btn" data-book :aria-label="`Mark ${s.name} as not booked`" :disabled="busy" @click="emit('act', { kind: 'book', tripId: trip.id, stayId: null })">
             Not booked
           </button>
           <button

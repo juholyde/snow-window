@@ -34,3 +34,18 @@ Overflow: `document.documentElement.scrollWidth` was 390 (innerWidth 390) on Boa
 9. Name field silently stops at 24 characters (typing a 26-character name drops the end); no counter or hint.
 10. "Join the crew" and "Copy invite link" (when full) look disabled; the name is the only thing that makes Join live, but nothing says so.
 11. Two members can pick the same emoji; with 20 people duplicates are common and avatars no longer identify anyone.
+
+## t33 after
+
+Primary controls at 390px, measured with `playwright-cli` after adding `min-height: 40px` inside `@media (max-width: 760px), (pointer: coarse)` (desktop with a mouse keeps its tighter sizes):
+
+| Control | Height (was) |
+|---|---|
+| Main tabs (Board, Trips, ...) | 40 (38) |
+| Suggest / Answer toggle | 40 (34) |
+| Going / Maybe / Can't | 40 (38) |
+| Driving / No car | 40 (26) |
+| Copy prompt / Paste answer | 40 (30) |
+| Show on board, Mark it on (trip actions) | 40 (35) |
+| Suggest to the crew / Clear | 40 |
+| Vote, Booked it | 40 |

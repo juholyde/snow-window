@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { useId } from 'vue'
 import { MAX_NAME } from '../lib/rules'
 
 /** Name and emoji avatar, for the welcome card and the account dialog. */
 const name = defineModel<string>('name', { required: true })
 const emoji = defineModel<string>('emoji', { required: true })
 defineProps<{ autofocus?: boolean }>()
+// One radio group per instance: the welcome form and the account dialog can both be mounted.
+const group = `avatar-${useId()}`
 
 const EMOJIS = ['⛷️', '🏂', '🎿', '❄️', '☃️', '🏔️', '🐧', '🦭', '🐻‍❄️', '🦊', '🐺', '🦌', '🐐', '🦅', '🧤', '🧣', '🚠', '🍫', '☕', '🫕', '🍷', '🔥', '😎', '🤘', '🐢', '🚀', '🦄', '🐙']
 </script>
@@ -14,7 +17,7 @@ const EMOJIS = ['⛷️', '🏂', '🎿', '❄️', '☃️', '🏔️', '🐧',
     <fieldset class="emoji-pick">
       <legend>Your avatar</legend>
       <label v-for="e in EMOJIS" :key="e" class="emoji-option" :class="{ picked: emoji === e }">
-        <input v-model="emoji" type="radio" :value="e" />
+        <input v-model="emoji" type="radio" :name="group" :value="e" />
         {{ e }}
       </label>
       <label class="emoji-custom">

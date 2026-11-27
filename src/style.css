@@ -711,6 +711,13 @@ a.stay-name { text-decoration: underline; text-decoration-color: var(--orange); 
   .manage { padding: 4px 2px; }
 }
 
+/* Primary controls are at least 40px tall on phones and touch screens; desktop keeps its tighter sizes. */
+@media (max-width: 760px), (pointer: coarse) {
+  .tab, .primary, .ghost, .seg > button, .seg > label, .drive-toggle button, .vote, .pick, .chip, .emoji-option, .small-btn { min-height: 40px; }
+  .emoji-option { min-width: 40px; }
+  .drive-toggle button, .vote { justify-content: center; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .window, .tab { transition: none; }
   .sheet[open] { animation: none; }

@@ -63,10 +63,24 @@ watch(
 const best = computed(() => stretchPicks(SEASON, props.counts, props.people.filter((p) => p.days.length).length))
 const art = `${import.meta.env.BASE_URL}art/`
 const label = (r: Range) => (r.start === r.end ? formatLong(r.start) : `${formatLong(r.start)} – ${formatLong(r.end)}`)
+const isPicked = (w: { start: Day; end: Day }) => props.range?.start === w.start && props.range?.end === span(w.start, w.end, MAX_TRIP_DAYS).end
 function pickBest(start: Day, end: Day) {
   const r = span(start, end, MAX_TRIP_DAYS)
   emit('range', r)
   timeline.value?.scrollToDay(r.start)
+}
+
+// Arrow keys move between the Suggest and Answer tabs, as on the top-level tabs.
+const VIEWS = ['suggest', 'answer'] as const
+async function onViewKey(e: KeyboardEvent) {
+  const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+  if (!step) return
+  const next = VIEWS[(VIEWS.indexOf(props.view) + step + VIEWS.length) % VIEWS.length]
+  if (!next) return
+  e.preventDefault()
+  emit('view', next)
+  await nextTick()
+  document.getElementById(`trips-view-${next}`)?.focus()
 }
 
 // The suggestion's resort drives the forecast row on its timeline.
@@ -84,11 +98,13 @@ const waiting = computed(
 <template>
   <div class="trips">
     <div class="trips-bar">
-      <div class="seg" role="tablist" aria-label="Trips view">
+      <div class="seg" role="tablist" aria-label="Trips view" @keydown="onViewKey">
         <button
           type="button"
+          id="trips-view-suggest"
           role="tab"
           :aria-selected="view === 'suggest'"
+          :tabindex="view === 'suggest' ? 0 : -1"
           :class="{ on: view === 'suggest' }"
           @click="emit('view', 'suggest')"
         >
@@ -96,8 +112,10 @@ const waiting = computed(
         </button>
         <button
           type="button"
+          id="trips-view-answer"
           role="tab"
           :aria-selected="view === 'answer'"
+          :tabindex="view === 'answer' ? 0 : -1"
           :class="{ on: view === 'answer' }"
           @click="emit('view', 'answer')"
         >
@@ -138,7 +156,8 @@ const waiting = computed(
               :key="w.start"
               type="button"
               class="pick"
-              :class="{ on: range?.start === w.start && range?.end === span(w.start, w.end, MAX_TRIP_DAYS).end }"
+              :aria-pressed="isPicked(w)"
+              :class="{ on: isPicked(w) }"
               @click="pickBest(w.start, w.end)"
             >
               <strong>{{ label(w) }}</strong>

@@ -490,7 +490,7 @@
       "id": "t33",
       "title": "Raise primary tap targets to 40px",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 3,
       "size": "S",
       "flavour": [
@@ -499,7 +499,8 @@
       "milestone": "m2",
       "why": "t25 walkthrough measured Suggest/Answer 34px, Going/Maybe/Can't 38, tabs 38, Driving 26, Copy prompt 30.",
       "doneWhen": "Every primary control measures at least 40px tall at 390px; listed in the walkthrough README.",
-      "parent": "t25"
+      "parent": "t25",
+      "result": "min-height 40px on primary controls at max-width 760px or coarse pointer (desktop unchanged); all measured 40px at 390px."
     },
     {
       "id": "t34",
@@ -583,7 +584,7 @@
       "id": "t39",
       "title": "Name the trip-flow controls and add arrow keys",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 3,
       "size": "S",
       "flavour": [
@@ -592,7 +593,8 @@
       "milestone": "m2",
       "why": "t29 audit: the vote button is named \"1 ⛷️\", Booked it repeats with no stay name, Suggest/Answer tabs ignore arrows, best-stretch picks lack aria-pressed, and 30 avatar radios without a name are 28 tab stops.",
       "doneWhen": "Each of those controls has a distinct accessible name and state, the avatar picker is one radio group with arrow keys, and the Suggest/Answer tabs take arrow keys.",
-      "parent": "t29"
+      "parent": "t29",
+      "result": "Vote and Booked it carry stay names, best-stretch picks have aria-pressed, avatar radios share one name per instance, Suggest/Answer tabs take arrows (roving tabindex)."
     },
     {
       "id": "t40",
@@ -608,7 +610,7 @@
       "why": "t29 audit: day titles are hover-only, tally avatars are named only by title, a heading-order warning on Trips, and Options for Ana opens a dialog titled You.",
       "doneWhen": "axe-core shows no warnings on all four tabs, and each listed item is named in visible or accessible text.",
       "parent": "t29",
-      "notes": "Also from t37: overlap and forecast cells still use ISO-date aria-labels (an app test selects them by that text); switch to the long date format and update the test."
+      "notes": "Also from t37: overlap and forecast cells still use ISO-date aria-labels (an app test selects them by that text); switch to the long date format and update the test. From t38: the day strip is still a v-if aria-live region, and TripCountdown carries role=status (two extra live regions besides App status region); make them plain text."
     },
     {
       "id": "t41",
@@ -626,7 +628,7 @@
       "parent": "t31"
     }
   ],
-  "next": "t33",
+  "next": "t36",
   "questions": [
     {
       "question": "Season range",

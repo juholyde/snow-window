@@ -14,6 +14,7 @@ const click = async (el: Element | null | undefined) => {
 }
 const buttonNamed = (name: string | RegExp) =>
   [...document.querySelectorAll('button')].find((b) => (typeof name === 'string' ? b.textContent?.trim() === name : name.test(b.textContent ?? '')))
+const buttonNamedLabel = (label: string) => document.querySelector(`button[aria-label="${label}"]`)
 const typeInto = async (el: Element | null, value: string) => {
   const input = el as HTMLInputElement
   input.value = value
@@ -111,6 +112,8 @@ it('pasted STAY lines become places, a vote counts, and Booked it shows the book
 
   const vote = document.querySelector<HTMLElement>('button.vote')
   expect(vote?.getAttribute('aria-pressed')).toBe('false')
+  expect(vote?.getAttribute('aria-label')).toBe('Vote for Hotel Tuca (0 votes)')
+  expect(buttonNamedLabel('Mark Hotel Tuca as booked')).toBeTruthy()
   await click(vote)
   expect(document.querySelector('button.vote[aria-pressed=true]')?.textContent).toContain('1')
 
