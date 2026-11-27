@@ -73,7 +73,7 @@ export function parseForecast(json: unknown, resorts: readonly Resort[]): Foreca
 
 type KeyValue = Pick<Storage, 'getItem' | 'setItem'>
 
-/** Fetches at most every 30 minutes per browser; a failed fetch keeps the last good forecast. */
+/** Fetches at most every 30 minutes per browser; a failed fetch keeps the last good forecast. The cache holds only for the same resort ids. */
 export async function loadForecasts(
   resorts: readonly Resort[],
   storage: KeyValue,
@@ -81,13 +81,16 @@ export async function loadForecasts(
   now = Date.now(),
 ): Promise<Forecasts> {
   const key = 'snow-window:forecast'
-  const cached = JSON.parse(storage.getItem(key) ?? 'null') as { at: number; data: Forecasts } | null
+  const ids = resorts.map((r) => r.id).sort().join(',')
+  const stored = JSON.parse(storage.getItem(key) ?? 'null') as { at: number; ids?: string; data: Forecasts } | null
+  // A cache built for another set of resorts would hide the ones added since.
+  const cached = stored?.ids === ids ? stored : null
   if (cached && now - cached.at < CACHE_MS) return cached.data
   try {
     const res = await fetchFn(forecastUrl(resorts))
     if (!res.ok) throw new Error(`Forecast request failed (${res.status})`)
     const data = parseForecast(await res.json(), resorts)
-    storage.setItem(key, JSON.stringify({ at: now, data }))
+    storage.setItem(key, JSON.stringify({ at: now, ids, data }))
     return data
   } catch (e) {
     if (cached) return cached.data
