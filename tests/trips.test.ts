@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Person } from '../src/lib/overlap'
 import { LocalStore } from '../src/lib/store'
-import { cleanDraft, coverage, parseStays, sortTrips, stayPrompt, type Trip, type TripDraft, tally } from '../src/lib/trips'
+import { awaitingAnswer, cleanDraft, coverage, parseStays, sortTrips, stayPrompt, type Trip, type TripDraft, tally } from '../src/lib/trips'
 
 const person = (id: string, days: string[]): Person => ({ id, name: id, emoji: '🏂', days })
 const draft = (over: Partial<TripDraft> = {}): TripDraft => ({
@@ -114,5 +114,18 @@ describe('LocalStore trips', () => {
     expect(left.map((t) => t.id)).toEqual([mine])
     expect(left[0]?.responses).toEqual({ me: 'yes' })
     expect(left.some((t) => t.id === hers)).toBe(false)
+  })
+})
+
+describe('awaitingAnswer', () => {
+  it('counts open and on trips I have not answered, and drops once I answer', () => {
+    const trips = [
+      trip({ id: '1' }),
+      trip({ id: '2', status: 'on', responses: { b: 'yes' } }),
+      trip({ id: '3', responses: { me: 'no' } }),
+      trip({ id: '4', status: 'cancelled' }),
+    ]
+    expect(awaitingAnswer(trips, 'me')).toBe(2)
+    expect(awaitingAnswer(trips.map((t) => ({ ...t, responses: { ...t.responses, me: 'maybe' } })), 'me')).toBe(0)
   })
 })

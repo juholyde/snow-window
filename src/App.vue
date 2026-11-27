@@ -15,7 +15,7 @@ import { countByDay, markDay, type Person, type TripWindow } from './lib/overlap
 import { MAX_PEOPLE } from './lib/rules'
 import { type Range, span } from './lib/selection'
 import { type Crew, type CrewPreview, type CrewStore, inviteLink, parseInvite, type Session, storeError } from './lib/store'
-import { type Answer, MAX_TRIP_DAYS, type StayAction, type Trip, type TripDraft, type TripStatus } from './lib/trips'
+import { type Answer, awaitingAnswer, MAX_TRIP_DAYS, type StayAction, type Trip, type TripDraft, type TripStatus } from './lib/trips'
 import { type Forecasts, loadForecasts } from './lib/weather'
 
 const props = defineProps<{ store: CrewStore; authError?: string | null }>()
@@ -325,9 +325,15 @@ function pickWindow(w: TripWindow) {
 
 const openTrips = computed(() => trips.value.filter((t) => t.status !== 'cancelled').length)
 // Trips opens on Answer when there is something to answer, otherwise on Suggest.
+const waiting = computed(() => awaitingAnswer(trips.value, me.value))
 const tripsPicked = ref<TripsView | null>(null)
 const tripsView = computed<TripsView>(() => tripsPicked.value ?? (openTrips.value ? 'answer' : 'suggest'))
 const tripRange = ref<Range | null>(null)
+
+function answerTrips() {
+  tripsPicked.value = 'answer'
+  tab.value = 'trips'
+}
 
 function suggestFrom(w: TripWindow) {
   tripRange.value = span(w.start, w.end, MAX_TRIP_DAYS)
@@ -471,7 +477,7 @@ onBeforeUnmount(() => {
           <AppIcon :name="t.icon" />
           <span class="tab-long">{{ t.label }}</span>
           <span class="tab-short" aria-hidden="true">{{ t.short }}</span>
-          <span v-if="t.id === 'trips' && openTrips" class="tab-count">{{ openTrips }}</span>
+          <span v-if="t.id === 'trips' && waiting" class="tab-count" :title="`${waiting} waiting for your answer`">{{ waiting }}</span>
         </button>
       </div>
     </header>
@@ -505,6 +511,10 @@ onBeforeUnmount(() => {
       <!-- Board: kept mounted so the timeline keeps its scroll position -->
       <section v-show="tab === 'board'" id="panel-board" class="panel board-panel" role="tabpanel" aria-labelledby="tab-board">
         <div class="board">
+          <div v-if="waiting" class="trip-nudge" role="status">
+            <span>{{ waiting === 1 ? 'A trip is' : `${waiting} trips are` }} waiting for your answer.</span>
+            <button type="button" class="primary" @click="answerTrips">Answer</button>
+          </div>
           <div class="board-top">
             <h2 class="board-title">Availability board</h2>
             <button type="button" class="invite-button" :disabled="people.length >= MAX_PEOPLE" @click="copyInvite">

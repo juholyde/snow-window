@@ -264,7 +264,7 @@
       "id": "t18",
       "title": "Nudge people about trips waiting on their answer",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 5,
       "size": "S",
       "flavour": [
@@ -272,7 +272,8 @@
       ],
       "milestone": "m2",
       "why": "Nothing tells a friend a trip was suggested; TripCard only flags unanswered inside the Trips tab and the 30s poll is silent.",
-      "doneWhen": "Trips tab badge counts trips where my row is unanswered, a Board banner links to them, both clear once I answer; unit test on the count."
+      "doneWhen": "Trips tab badge counts trips where my row is unanswered, a Board banner links to them, both clear once I answer; unit test on the count.",
+      "result": "Trips tab badge now counts open/on trips I have not answered (awaitingAnswer in trips.ts, tested); Board banner with Answer button opens Trips > Answer; both clear on answering."
     },
     {
       "id": "t19",

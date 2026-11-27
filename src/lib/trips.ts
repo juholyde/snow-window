@@ -159,3 +159,8 @@ export type StayAction =
   | { kind: 'remove'; stayId: string }
   | { kind: 'vote'; stayId: string; vote: boolean }
   | { kind: 'book'; tripId: string; stayId: string | null }
+
+/** Open or on trips where this person has not answered yet; cancelled ones never wait. */
+export function awaitingAnswer(trips: readonly Trip[], personId: string): number {
+  return trips.filter((t) => t.status !== 'cancelled' && !t.responses[personId]).length
+}
