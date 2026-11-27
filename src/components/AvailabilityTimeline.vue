@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { type Day, daysBetween, formatLong, formatMonth, todayLocal } from '../lib/dates'
 import { type DayMark, markDay, type Person } from '../lib/overlap'
 import { modeFor, type PaintMode, paint, type Range, span, tapRange } from '../lib/selection'
@@ -164,6 +164,100 @@ function onUp(e: PointerEvent) {
   if (next.join() !== person.days.join()) emit('change', d.id, next)
 }
 
+// Keyboard: a WAI-ARIA grid with one tab stop per row. All rows share the roving column, so
+// Up/Down keep the day and Tab lands on the same day in every row.
+const col = ref<Day | null>(null)
+const stopDay = computed<Day | null>(() => {
+  if (col.value && props.days.includes(col.value)) return col.value
+  return props.days.includes(today) ? today : (props.days[0] ?? null)
+})
+const tabStop = (d: Day) => (d === stopDay.value ? 0 : -1)
+const dayState = (p: Person, d: Day) => `${formatLong(d)}, ${p.days.includes(d) ? 'free' : 'not marked'}, ${props.counts.get(d) ?? 0} of ${total.value} free`
+const pickState = (d: Day) => {
+  const r = lit.value
+  const picked = r !== null && d >= r.start && d <= r.end
+  return `${formatLong(d)}, ${picked ? 'in your trip, ' : ''}${props.counts.get(d) ?? 0} of ${total.value} free`
+}
+
+// Shift+Arrow paints (or picks) a range like a drag; releasing Shift commits it.
+let shiftPick: Day | null = null
+function commitKeyRange() {
+  const d = drag.value
+  if (!d || d.pointer !== -1) return
+  drag.value = null
+  const person = props.people.find((p) => p.id === d.id)
+  if (!person) return
+  const next = paint(person.days, d.anchor, d.current, d.mode)
+  if (next.join() !== person.days.join()) emit('change', d.id, next)
+}
+
+function rowKeys(box: HTMLElement): string[] {
+  return [...new Set([...box.querySelectorAll<HTMLElement>('[data-row]')].map((c) => c.dataset.row as string))]
+}
+
+async function moveTo(box: HTMLElement, row: string, day: Day) {
+  col.value = day
+  await nextTick()
+  box.querySelector<HTMLElement>(`[data-row="${row}"][data-day="${day}"]`)?.focus()
+}
+
+function onKey(e: KeyboardEvent) {
+  const box = scroller.value
+  const cell = (e.target as HTMLElement).closest<HTMLElement>('[data-row][data-day]')
+  if (!box || !cell || e.altKey || e.ctrlKey || e.metaKey) return
+  const row = cell.dataset.row as string
+  const day = cell.dataset.day as Day
+  const i = props.days.indexOf(day)
+  const person = props.people.find((p) => p.id === row)
+  const mine = Boolean(person) && props.editable.has(row)
+
+  if (e.key === ' ' || e.key === 'Enter') {
+    if (picking.value) {
+      e.preventDefault()
+      emit('pick', tapRange(props.highlight, day, MAX_TRIP_DAYS))
+    } else if (mine && person) {
+      e.preventDefault()
+      commitKeyRange()
+      emit('change', row, paint(person.days, day, day, modeFor(person.days, day)))
+    }
+    return
+  }
+
+  let target: Day | undefined
+  let nextRow = row
+  const rows = rowKeys(box)
+  const r = rows.indexOf(row)
+  const monthAt = months.value.filter((m) => m.start <= day).length - 1
+  if (e.key === 'ArrowRight') target = props.days[i + 1]
+  else if (e.key === 'ArrowLeft') target = props.days[i - 1]
+  else if (e.key === 'Home') target = props.days[0]
+  else if (e.key === 'End') target = props.days[props.days.length - 1]
+  else if (e.key === 'PageDown') target = months.value[monthAt + 1]?.start ?? props.days[props.days.length - 1]
+  else if (e.key === 'PageUp') target = months.value[monthAt]?.start === day ? months.value[monthAt - 1]?.start : months.value[monthAt]?.start
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    nextRow = rows[r + (e.key === 'ArrowDown' ? 1 : -1)] ?? row
+    target = day
+  } else return
+  e.preventDefault()
+  if (!target) return
+
+  const horizontal = e.key !== 'ArrowDown' && e.key !== 'ArrowUp'
+  if (e.shiftKey && horizontal && picking.value) {
+    shiftPick ??= day
+    emit('pick', span(shiftPick, target, MAX_TRIP_DAYS))
+  } else if (e.shiftKey && horizontal && mine && person) {
+    if (!drag.value) drag.value = { id: row, anchor: day, current: day, mode: modeFor(person.days, day), pointer: -1 }
+    drag.value.current = target
+  } else commitKeyRange()
+  void moveTo(box, nextRow, target)
+}
+
+function onKeyUp(e: KeyboardEvent) {
+  if (e.key !== 'Shift') return
+  shiftPick = null
+  commitKeyRange()
+}
+
 const scroller = ref<HTMLElement | null>(null)
 function scrollToDay(day: Day, smooth = true, contextDays = 3) {
   const el = scroller.value?.querySelector<HTMLElement>(`.head-days [data-day="${day}"]`)
@@ -189,28 +283,38 @@ defineExpose({ scrollToDay })
     @pointermove="onMove"
     @pointerup="onUp"
     @pointercancel="onUp"
+    @keydown="onKey"
+    @keyup="onKeyUp"
+    @focusin="(e) => { const d = (e.target as HTMLElement).dataset.day as Day | undefined; if (d && (e.target as HTMLElement).dataset.row) col = d }"
   >
-    <div class="grid">
+    <div class="grid" role="grid" :aria-label="picking ? 'Pick trip dates' : 'Crew availability'">
+      <div class="grow" role="row">
       <!-- Months -->
-      <div class="name head corner month-jump">
+      <div class="name head corner month-jump" role="rowheader">
         <PickMenu :options="monthOptions" :value="null" label="Go to month" menu-label="Jump to month" @pick="(d) => scrollToDay(d, false, 0)" />
       </div>
-      <div class="head-months">
+      <div class="head-months" role="presentation">
         <div v-for="m in months" :key="m.label" class="month" :style="{ gridColumn: `span ${m.span}` }">
           <span>{{ m.label }}</span>
         </div>
       </div>
 
+      </div>
+
       <!-- Days -->
-      <div class="name head corner corner-low">
+      <div class="grow" role="row" aria-label="Days">
+      <div class="name head corner corner-low" role="rowheader">
         <span class="hint">{{ picking ? 'Pick days in the New trip row' : 'Tap a day for details' }}</span>
       </div>
-      <div class="head-days">
+      <div class="head-days" role="presentation">
         <button
           v-for="d in days"
           :key="d"
           type="button"
           class="day-head"
+          role="gridcell"
+          data-row="head"
+          :tabindex="tabStop(d)"
           :aria-label="formatLong(d)"
           :class="columnClass(d)"
           :data-day="d"
@@ -224,20 +328,26 @@ defineExpose({ scrollToDay })
         </button>
       </div>
 
+      </div>
+
       <!-- Overlap -->
-      <div class="name overlap-name">
+      <div class="grow" role="row" aria-label="Whole crew">
+      <div class="name overlap-name" role="rowheader">
         <span class="avatar">🏔️</span>
         <span class="label">
           <strong>Whole crew</strong>
           <small>{{ total }}/{{ people.length }} marked</small>
         </span>
       </div>
-      <div class="row overlap-row">
+      <div class="row overlap-row" role="presentation">
         <button
           v-for="d in days"
           :key="d"
           type="button"
           class="cell overlap-cell"
+          role="gridcell"
+          data-row="overlap"
+          :tabindex="tabStop(d)"
           :class="[columnClass(d), heat(d)]"
           :data-day="d"
           :aria-label="`${d}: ${counts.get(d) ?? 0} of ${total} free`"
@@ -248,19 +358,25 @@ defineExpose({ scrollToDay })
         </button>
       </div>
 
+      </div>
+
       <!-- Forecast -->
-      <div class="name forecast-name">
+      <div class="grow" role="row" aria-label="Forecast">
+      <div class="name forecast-name" role="rowheader">
         <div class="resort-pick">
           <small>Forecast at</small>
           <PickMenu :options="resortOptions" :value="resortId" :label="resortName" menu-label="Forecast resort" @pick="(id) => emit('resort', id)" />
         </div>
       </div>
-      <div class="row forecast-row">
+      <div class="row forecast-row" role="presentation">
         <button
           v-for="d in days"
           :key="d"
           type="button"
           class="cell forecast-cell"
+          role="gridcell"
+          data-row="forecast"
+          :tabindex="tabStop(d)"
           :class="[columnClass(d), { fresh: (forecast?.[d]?.snowCm ?? 0) >= 5, none: !forecast?.[d] }]"
           :data-day="d"
           :aria-label="forecast?.[d] ? `${d}: ${forecast[d].kind}, ${forecast[d].snowCm} cm snow, ${forecast[d].tMin} to ${forecast[d].tMax} °C` : `${d}: no forecast yet`"
@@ -275,19 +391,26 @@ defineExpose({ scrollToDay })
       </div>
 
       <!-- Picking: one row for the trip being suggested, with the days people are free as options -->
+      </div>
+
       <template v-if="picking">
-        <div class="name pick-name">
+        <div class="grow" role="row" aria-label="New trip">
+        <div class="name pick-name" role="rowheader">
           <span class="avatar">🎿</span>
           <span class="label">
             <strong>New trip</strong>
             <small>{{ pickLabel }}</small>
           </span>
         </div>
-        <div class="row pick-row">
+        <div class="row pick-row" role="presentation">
           <div
             v-for="d in days"
             :key="d"
             class="cell pick-cell"
+            role="gridcell"
+            data-row="pick"
+            :tabindex="tabStop(d)"
+            :aria-label="pickState(d)"
             :class="[columnClass(d), slotClass(d)]"
             :data-day="d"
             :title="`${counts.get(d) ?? 0} of ${total} free`"
@@ -295,11 +418,13 @@ defineExpose({ scrollToDay })
             <span class="slot" />
           </div>
         </div>
+        </div>
       </template>
 
       <!-- People -->
       <template v-for="p in picking ? [] : people" :key="p.id">
-        <div class="name person-name" :class="{ mine: editable.has(p.id) }">
+        <div class="grow" role="row" :aria-label="p.name">
+        <div class="name person-name" :class="{ mine: editable.has(p.id) }" role="rowheader">
           <span class="avatar">{{ p.emoji }}</span>
           <span class="label">
             <strong>{{ p.name }}</strong>
@@ -316,15 +441,22 @@ defineExpose({ scrollToDay })
             <AppIcon name="more" />
           </button>
         </div>
-        <div class="row" :class="{ editable: editable.has(p.id) }">
+        <div class="row" :class="{ editable: editable.has(p.id) }" role="presentation">
           <div
             v-for="d in days"
             :key="d"
             class="cell"
+            role="gridcell"
+            :data-row="p.id"
+            :tabindex="tabStop(d)"
+            :aria-label="dayState(p, d)"
+            :aria-selected="shownDays(p).has(d)"
+            :aria-readonly="!editable.has(p.id)"
             :class="[columnClass(d), { free: shownDays(p).has(d) }]"
             :data-day="d"
             @pointerdown="onDown($event, p, d)"
           />
+        </div>
         </div>
       </template>
       <slot name="footer" />

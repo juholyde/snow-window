@@ -145,3 +145,32 @@ it('the last Going shows the Rufus banner once, and it does not come back after 
   await click(tab(/Trips/))
   expect(document.querySelector('.celebrate')).toBeNull()
 })
+
+it('days can be marked by keyboard: roving stop, Space toggles, Shift+Arrow paints a range', async () => {
+  await openApp('ann')
+  await typeInto(document.querySelector('input[aria-label="Your name"]'), 'Ann')
+  await typeInto(document.querySelector('input[placeholder="Pyrenees gang"]'), 'Pyrenees gang')
+  await click(buttonNamed('Create crew'))
+
+  const own = () => document.querySelector('.row.editable') as HTMLElement
+  expect(own().querySelectorAll('[tabindex="0"]').length).toBe(1)
+  const cell = (day: string) => own().querySelector(`[data-day="${day}"]`) as HTMLElement
+  const key = async (el: Element, k: string, shiftKey = false, type = 'keydown') => {
+    el.dispatchEvent(new KeyboardEvent(type, { key: k, shiftKey, bubbles: true, cancelable: true }))
+    await flushPromises()
+  }
+
+  cell('2026-12-05').focus()
+  expect(cell('2026-12-05').getAttribute('aria-label')).toBe('Sat 5 Dec, not marked, 0 of 0 free')
+  await key(cell('2026-12-05'), ' ')
+  expect(cell('2026-12-05').getAttribute('aria-label')).toContain('free,')
+  expect((await storeFor('ann').profile())?.days).toEqual(['2026-12-05'])
+
+  await key(cell('2026-12-05'), 'ArrowRight')
+  expect(document.activeElement).toBe(cell('2026-12-06'))
+  expect(own().querySelectorAll('[tabindex="0"]').length).toBe(1)
+  await key(cell('2026-12-06'), 'ArrowRight', true)
+  await key(cell('2026-12-07'), 'ArrowRight', true)
+  await key(cell('2026-12-08'), 'Shift', true, 'keyup')
+  expect((await storeFor('ann').profile())?.days).toEqual(['2026-12-05', '2026-12-06', '2026-12-07', '2026-12-08'])
+})

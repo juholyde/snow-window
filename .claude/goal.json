@@ -548,7 +548,7 @@
       "id": "t37",
       "title": "Make the timeline keyboard-usable",
       "kind": "labour",
-      "status": "doing",
+      "status": "done",
       "importance": 5,
       "size": "M",
       "flavour": [
@@ -557,7 +557,8 @@
       "milestone": "m1",
       "why": "t29 audit: own-row day cells are plain divs with only pointerdown, so days cannot be marked or read by keyboard (blocker); the board has 453 tab stops, ISO-date labels, and in pick mode custom trip dates are unreachable.",
       "doneWhen": "Roving-tabindex grid with one tab stop per row; Space/Enter toggles a day, Shift+Arrow marks a range; each cell names its date and state; trip date picking works by keyboard; an App test drives marking by keys.",
-      "parent": "t29"
+      "parent": "t29",
+      "result": "Roving-tabindex ARIA grid: one tab stop per row, Space/Enter toggles own day, Shift+Arrow paints a range, Arrows/Home/End/PageUp/PageDown/Up/Down move, pick mode Enter/Space taps; App keyboard test added."
     },
     {
       "id": "t38",
@@ -605,7 +606,7 @@
       "parent": "t29"
     }
   ],
-  "next": "t37",
+  "next": "t31",
   "questions": [
     {
       "question": "Season range",

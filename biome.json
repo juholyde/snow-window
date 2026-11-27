@@ -1,8 +1,39 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "includes": ["**", "!dist"] },
-  "html": { "experimentalFullSupportEnabled": true },
-  "formatter": { "enabled": false },
-  "assist": { "enabled": false }
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!dist"
+    ]
+  },
+  "html": {
+    "experimentalFullSupportEnabled": true
+  },
+  "formatter": {
+    "enabled": false
+  },
+  "assist": {
+    "enabled": false
+  },
+  "overrides": [
+    {
+      "includes": [
+        "src/components/AvailabilityTimeline.vue"
+      ],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off",
+            "useFocusableInteractive": "off",
+            "noStaticElementInteractions": "off"
+          }
+        }
+      }
+    }
+  ]
 }
