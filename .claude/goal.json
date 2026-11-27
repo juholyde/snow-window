@@ -700,7 +700,7 @@
       "id": "t46",
       "title": "Compute per-person distance and travel hints from a home city",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "S",
       "flavour": [
@@ -708,7 +708,8 @@
       ],
       "milestone": "m1",
       "why": "Each person's distance to a resort follows from where they live; chosen: computed in the browser, no routing service",
-      "doneWhen": "src/lib/distance.ts gives straight-line km, a road estimate and a drive time, or a 'fly' hint past a set distance, from a city to a resort. A fixed list of about 40 home cities (Barcelona, Madrid, Helsinki, Stockholm, Munich, Geneva, London…) lives in config. Tested; Barcelona's checked bus and train times still show for Barcelona-based people"
+      "doneWhen": "src/lib/distance.ts gives straight-line km, a road estimate and a drive time, or a 'fly' hint past a set distance, from a city to a resort. A fixed list of about 40 home cities (Barcelona, Madrid, Helsinki, Stockholm, Munich, Geneva, London…) lives in config. Tested; Barcelona's checked bus and train times still show for Barcelona-based people",
+      "result": "c8f4f20 + review fix: 43 cities; road km = straight line × 1.35, drive minutes = 40 + 0.72 × road km (within -25%..+20% on Barcelona's 7); fly when over 950 km or across the Baltic, but drive round the Bothnian Bay north of 64°N"
     },
     {
       "id": "t47",
