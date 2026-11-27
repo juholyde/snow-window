@@ -294,7 +294,7 @@
       "id": "t20",
       "title": "Add a next-step strip that guides the crew through the journey",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "S",
       "flavour": [
@@ -302,7 +302,8 @@
       ],
       "milestone": "m1",
       "why": "After joining, people land on a bare board with no hint to mark days, then suggest a trip from the overlap.",
-      "doneWhen": "One strip derives the step from crew state (few marked, no window, no trip, awaiting answers) with one button to the right tab, hidden once a trip is on; unit test on the step logic."
+      "doneWhen": "One strip derives the step from crew state (few marked, no window, no trip, awaiting answers) with one button to the right tab, hidden once a trip is on; unit test on the step logic.",
+      "result": "nextStep() in lib/nextStep.ts (tested) drives one Board strip (replaces the t18 banner): answer, mark days, nudge to invite, suggest a trip, see windows; hidden once a trip is on."
     },
     {
       "id": "t21",
@@ -446,7 +447,7 @@
       "doneWhen": "Juho chooses car seats, packing list, both or neither; a follow-up task with a migration outline is filed if any."
     }
   ],
-  "next": "t19",
+  "next": "t20",
   "questions": [
     {
       "question": "Season range",

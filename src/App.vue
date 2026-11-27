@@ -11,7 +11,8 @@ import WelcomeCard from './components/WelcomeCard.vue'
 import { HOLIDAYS, KEY_DATES, SEASON } from './config/calendar'
 import { RESORTS } from './config/resorts'
 import { type Day, eachDay, formatDayMonth, formatLong, todayLocal } from './lib/dates'
-import { countByDay, markDay, type Person, type TripWindow } from './lib/overlap'
+import { bestWindows, countByDay, markDay, type Person, type TripWindow } from './lib/overlap'
+import { type StepKind, nextStep } from './lib/nextStep'
 import { MAX_PEOPLE } from './lib/rules'
 import { inviteMessage } from './lib/share'
 import { type Range, span } from './lib/selection'
@@ -338,6 +339,28 @@ function answerTrips() {
   tab.value = 'trips'
 }
 
+const step = computed(() => {
+  const state = {
+    people: people.value.length,
+    marked: marked.value,
+    iMarked: mine.value.some((p) => p.days.length > 0),
+    waiting: waiting.value,
+    hasWindow: bestWindows(SEASON, counts.value, marked.value).windows.length > 0,
+    trips: trips.value,
+  }
+  return nextStep(state)
+})
+
+function runStep(kind: StepKind) {
+  if (kind === 'answer') answerTrips()
+  else if (kind === 'nudge') copyInvite()
+  else if (kind === 'windows') tab.value = 'windows'
+  else if (kind === 'suggest') {
+    tripsPicked.value = 'suggest'
+    tab.value = 'trips'
+  }
+}
+
 function suggestFrom(w: TripWindow) {
   tripRange.value = span(w.start, w.end, MAX_TRIP_DAYS)
   tripsPicked.value = 'suggest'
@@ -514,9 +537,9 @@ onBeforeUnmount(() => {
       <!-- Board: kept mounted so the timeline keeps its scroll position -->
       <section v-show="tab === 'board'" id="panel-board" class="panel board-panel" role="tabpanel" aria-labelledby="tab-board">
         <div class="board">
-          <div v-if="waiting" class="trip-nudge" role="status">
-            <span>{{ waiting === 1 ? 'A trip is' : `${waiting} trips are` }} waiting for your answer.</span>
-            <button type="button" class="primary" @click="answerTrips">Answer</button>
+          <div v-if="step" class="trip-nudge" role="status">
+            <span>{{ step.text }}</span>
+            <button v-if="step.button" type="button" class="primary" @click="runStep(step.kind)">{{ step.button }}</button>
           </div>
           <div class="board-top">
             <h2 class="board-title">Availability board</h2>
