@@ -64,7 +64,7 @@ describe('share card layout', () => {
 describe('nudge message', () => {
   it('names who is waiting, the trip, and ends with the link', () => {
     const m = nudgeMessage(trip({ title: 'Baqueira weekend' }), [people[0], people[1]] as typeof people, URL)
-    expect(m).toContain('🏂 Ana, ⛷️ Bo: can you answer the Baqueira weekend trip (')
+    expect(m.startsWith('🏂 Ana, ⛷️ Bo: can you answer the Baqueira weekend trip (')).toBe(true)
     expect(m).toContain('Going / Maybe')
     expect(m.endsWith(URL)).toBe(true)
   })

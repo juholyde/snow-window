@@ -30,5 +30,5 @@ export function inviteMessage(crewName: string, crewUrl: string): string {
 export function nudgeMessage(trip: Trip, waiting: readonly Person[], crewUrl: string): string {
   const resort = RESORTS.find((r) => r.id === trip.resortId)?.name ?? trip.resortId
   const when = trip.start === trip.end ? formatLong(trip.start) : `${formatLong(trip.start)} – ${formatLong(trip.end)}`
-  return `⛷️ ${names(waiting)}: can you answer the ${trip.title || resort} trip (${when})? Going / Maybe / Can't here: ${crewUrl}`
+  return `${names(waiting)}: can you answer the ${trip.title || resort} trip (${when})? Going / Maybe / Can't here: ${crewUrl}`
 }
