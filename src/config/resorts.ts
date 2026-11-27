@@ -51,7 +51,7 @@ export const RESORTS: Resort[] = [
     lon: 0.93,
     elevation: 2000,
     photo: commons('baqueira.jpg', 'Cantabrucu', 'CC0', 'Baqueira-Beret_16.jpg'),
-    travel: { car: { km: 320, minutes: 230, route: 'Via Lleida and the Vielha tunnel' }, bus: { minutes: 280, kind: 'change', route: 'Alsa to Vielha, then local line VA to Baqueira', checked: 'official' }, train: { minutes: 237, kind: 'change', route: 'Train to Lleida, then bus via Vielha to Baqueira', checked: 'official' } },
+    travel: { car: { km: 320, minutes: 266, route: 'A-2 to Lleida, then N-230 via Benabarre and the Vielha tunnel' }, bus: { minutes: 280, kind: 'change', route: 'Alsa to Vielha, then local line VA to Baqueira', checked: 'official' }, train: { minutes: 237, kind: 'change', route: 'Train to Lleida, then bus via Vielha to Baqueira', checked: 'official' } },
     webcams: [{ label: 'Live webcams', url: 'https://www.baqueira.es/es/webcams' }, archive('baqueira-beret')],
   },
   {

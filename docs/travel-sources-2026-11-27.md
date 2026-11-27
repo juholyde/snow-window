@@ -19,6 +19,8 @@ Legs that run only in season or on some days carry `runs`.
 | Sierra Nevada | Bus | 890 | estimate | Alsa coach about 12h45 (Movelia). Tocina bus up from autotransportetocina.es/sierra-nevada2 (official, undated): Granada 08:00, 10:15 and 17:15, plus 15:00 at weekends |
 | Sierra Nevada | Train | 585 (was 450) | estimate | AVE 08:30 Sants to 15:38 Granada (Omio snapshot), then the 17:15 Tocina bus up. The old 450 counted the train only |
 
+Car to Baqueira: 266 min (was 230), from the same baqueira.es page ("Coche 4h 26m": A-2, A-14, then N-230 via Benabarre and Vielha). The other car times were not checked.
+
 Flight Barcelona–Granada: Vueling nonstop, 1h35–1h40. The note stays.
 
 ## Still to check
