@@ -370,7 +370,7 @@
       "id": "t25",
       "title": "Walk the invite-to-answer journey on a phone with a full 20-person crew",
       "kind": "expedition",
-      "status": "todo",
+      "status": "done",
       "importance": 4,
       "size": "M",
       "flavour": [
@@ -379,6 +379,8 @@
       "milestone": "m1",
       "why": "Success needs a real group on phones; drag-to-mark, range picks and 20 rows of 24-character names were never tried together at 390px.",
       "doneWhen": "Playwright on a local seeded demo at 390px: a fresh guest joins by link, marks days, suggests and answers; a 20-member long-name crew renders without overflow; screenshots kept and friction filed as tasks."
+,
+      "result": "Walked join, tap and drag marking, suggest and answer at 390px with a 20-person long-name crew: no horizontal overflow; fixed clipped answer cards; 10 screenshots and 11 friction points in docs/walkthrough/2026-11-27."
     },
     {
       "id": "t26",
