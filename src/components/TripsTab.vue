@@ -128,6 +128,7 @@ const waiting = computed(
     </div>
 
     <div v-if="view === 'suggest'" class="suggest-view">
+      <h2 class="visually-hidden">Pick the dates on the board</h2>
       <div class="board">
         <AvailabilityTimeline
           ref="timeline"
@@ -186,6 +187,7 @@ const waiting = computed(
     </div>
 
     <section v-else class="answer-view" aria-label="Suggested trips">
+      <h2 class="visually-hidden">Suggested trips</h2>
       <div v-if="!visible.length" class="empty empty-trips">
         <img :src="art + 'tycoon-skier@512.png'" alt="" width="150" height="150" />
         <div>

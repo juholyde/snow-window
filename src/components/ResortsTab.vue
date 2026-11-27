@@ -36,6 +36,7 @@ const cards = computed(() =>
 
 <template>
   <div class="resorts">
+    <h2 class="visually-hidden">Resorts</h2>
     <p v-if="error" class="fc-error">Couldn't reach the weather service. Webcams still work.</p>
     <ul class="resort-grid">
       <li v-for="c in cards" :key="c.r.id" class="resort" :class="{ picked: c.r.id === resortId }">

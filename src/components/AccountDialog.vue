@@ -6,7 +6,7 @@ import AppIcon from './AppIcon.vue'
 import ProfileFields from './ProfileFields.vue'
 
 /** You: name and avatar, saving a guest account by email, signing in elsewhere, signing out. */
-const props = defineProps<{ open: boolean; session: Session; profile: Person | null; busy: boolean; google: boolean }>()
+const props = defineProps<{ open: boolean; session: Session; profile: Person | null; busy: boolean; google: boolean; taken?: readonly { name: string; emoji: string }[] }>()
 const emit = defineEmits<{
   close: []
   profile: [name: string, emoji: string]
@@ -43,12 +43,12 @@ watch(
 <template>
   <dialog ref="dialog" class="account" aria-labelledby="account-title" @close="emit('close')">
     <div class="account-head">
-      <h2 id="account-title">You</h2>
+      <h2 id="account-title">Your profile</h2>
       <button type="button" class="ghost icon-only" aria-label="Close" @click="emit('close')"><AppIcon name="close" /></button>
     </div>
 
     <form v-if="profile" class="account-block" @submit.prevent="emit('profile', name, emoji)">
-      <ProfileFields v-model:name="name" v-model:emoji="emoji" />
+      <ProfileFields v-model:name="name" v-model:emoji="emoji" :taken="taken" />
       <button type="submit" class="primary" :disabled="busy || !name.trim() || !emoji.trim()">Save name and avatar</button>
     </form>
 

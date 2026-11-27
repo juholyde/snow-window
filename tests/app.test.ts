@@ -45,7 +45,7 @@ it('marking days on my row moves the count and the overlap, and is saved', async
 
   expect(text()).toContain('you · 2 days')
   expect(text()).toContain('1/1 marked')
-  expect(document.querySelector('[aria-label="2026-12-05: 1 of 1 free"]')).not.toBeNull()
+  expect(document.querySelector('[aria-label="Sat 5 Dec: 1 of 1 free"]')).not.toBeNull()
   // Saved to the store, not only drawn.
   expect((await storeFor('ann').profile())?.days).toEqual(['2026-12-05', '2026-12-06'])
 

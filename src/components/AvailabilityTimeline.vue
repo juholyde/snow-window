@@ -52,6 +52,7 @@ const months = computed(() => {
 })
 
 const weekLetter = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const dayName = (d: Day) => [formatLong(d), markOf(d).holiday, markOf(d).keyDate].filter(Boolean).join(', ')
 const dayNum = (d: Day) => Number(d.slice(8))
 const letter = (d: Day) => weekLetter[new Date(`${d}T00:00:00Z`).getUTCDay()]
 
@@ -260,6 +261,9 @@ function onKeyUp(e: KeyboardEvent) {
   commitKeyRange()
 }
 
+// Tapping a name shows it in full: on a phone the name column clips long and lookalike names.
+const named = ref<string | null>(null)
+
 const scroller = ref<HTMLElement | null>(null)
 function scrollToDay(day: Day, smooth = true, contextDays = 3) {
   const el = scroller.value?.querySelector<HTMLElement>(`.head-days [data-day="${day}"]`)
@@ -281,7 +285,8 @@ defineExpose({ scrollToDay })
     class="timeline"
     :class="{ picking }"
     :style="{ '--cols': days.length }"
-    @pointerdown="onPickDown"
+    @pointerdown="(e) => { if (!(e.target as HTMLElement).closest('.name-btn')) named = null; onPickDown(e) }"
+    @scroll.passive="named = null"
     @pointermove="onMove"
     @pointerup="onUp"
     @pointercancel="onUp"
@@ -317,7 +322,7 @@ defineExpose({ scrollToDay })
           role="gridcell"
           data-row="head"
           :tabindex="tabStop(d)"
-          :aria-label="formatLong(d)"
+          :aria-label="dayName(d)"
           :class="columnClass(d)"
           :data-day="d"
           :title="[markOf(d).holiday, markOf(d).keyDate].filter(Boolean).join(' · ') || undefined"
@@ -352,7 +357,7 @@ defineExpose({ scrollToDay })
           :tabindex="tabStop(d)"
           :class="[columnClass(d), heat(d)]"
           :data-day="d"
-          :aria-label="`${d}: ${counts.get(d) ?? 0} of ${total} free`"
+          :aria-label="`${formatLong(d)}: ${counts.get(d) ?? 0} of ${total} free`"
           @click="focus(d)"
         >
           <AppIcon v-if="heat(d) === 'all'" name="check" :size="16" />
@@ -381,7 +386,7 @@ defineExpose({ scrollToDay })
           :tabindex="tabStop(d)"
           :class="[columnClass(d), { fresh: (forecast?.[d]?.snowCm ?? 0) >= 5, none: !forecast?.[d] }]"
           :data-day="d"
-          :aria-label="forecast?.[d] ? `${d}: ${forecast[d].kind}, ${forecast[d].snowCm} cm snow, ${forecast[d].tMin} to ${forecast[d].tMax} °C` : `${d}: no forecast yet`"
+          :aria-label="forecast?.[d] ? `${formatLong(d)}: ${forecast[d].kind}, ${forecast[d].snowCm} cm snow, ${forecast[d].tMin} to ${forecast[d].tMax} °C` : `${formatLong(d)}: no forecast yet`"
           @click="focus(d)"
         >
           <template v-if="forecast?.[d]">
@@ -429,15 +434,18 @@ defineExpose({ scrollToDay })
         <div class="name person-name" :class="{ mine: editable.has(p.id) }" role="rowheader">
           <span class="avatar">{{ p.emoji }}</span>
           <span class="label">
-            <strong :title="p.name">{{ p.name }}</strong>
-            <small v-if="editable.has(p.id)">you · {{ p.days.length }} days</small>
+            <button type="button" class="name-btn" tabindex="-1" :aria-expanded="named === p.id" @click="named = named === p.id ? null : p.id">
+              <strong :title="p.name">{{ p.name }}</strong>
+            </button>
+            <small v-if="editable.has(p.id)">you<span class="days-part"> · {{ p.days.length }} days</span></small>
             <small v-else>{{ p.days.length }} days</small>
           </span>
+          <span v-if="named === p.id" class="name-pop" aria-hidden="true">{{ p.name }}</span>
           <button
             v-if="editable.has(p.id)"
             type="button"
             class="manage"
-            :aria-label="`Options for ${p.name}`"
+            :aria-label="`Your profile: ${p.name}`"
             @click="emit('manage', p.id)"
           >
             <AppIcon name="more" />

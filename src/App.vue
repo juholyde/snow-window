@@ -482,6 +482,11 @@ const focusInfo = computed(() => {
   return { day: d, mark: markDay(d), free, weather }
 })
 
+// The day strip is plain text; its summary goes through the always-mounted status region.
+watch(focusInfo, (f, old) => {
+  if (f && f.day !== old?.day) announce(`${formatLong(f.day)}: ${f.free.length} of ${people.value.length} free`)
+})
+
 // Someone else's edits show up within half a minute, and at once when you come back to the tab.
 let poll: ReturnType<typeof setInterval> | undefined
 let weatherPoll: ReturnType<typeof setInterval> | undefined
@@ -535,7 +540,7 @@ onBeforeUnmount(() => {
             <span class="crew-button-name">{{ crew.name }}</span>
             <small class="crew-button-count">{{ people.length || crew.members }}</small>
           </button>
-          <button type="button" class="me-button" :aria-label="`You: ${profile.name}`" @click="accountOpen = true">
+          <button type="button" class="me-button" :aria-label="`Your profile: ${profile.name}`" @click="accountOpen = true">
             <span class="avatar">{{ profile.emoji }}</span>
             <span v-if="session.guest" class="me-guest">Guest</span>
           </button>
@@ -630,7 +635,7 @@ onBeforeUnmount(() => {
             @manage="accountOpen = true"
           />
 
-          <section v-if="focusInfo" class="day-strip" aria-live="polite" :aria-label="formatLong(focusInfo.day)">
+          <section v-if="focusInfo" class="day-strip" :aria-label="formatLong(focusInfo.day)">
             <div class="day-strip-who">
               <h3>{{ formatLong(focusInfo.day) }}</h3>
               <span v-if="focusInfo.mark.holiday" class="tag holiday-tag">{{ focusInfo.mark.holiday }}</span>
@@ -753,6 +758,7 @@ onBeforeUnmount(() => {
       :profile="profile"
       :busy="busy"
       :google="store.kind === 'shared'"
+      :taken="people.filter((p) => p.id !== me)"
       @close="accountOpen = false"
       @profile="saveProfile"
       @save="saveAccount"

@@ -537,7 +537,8 @@
       "id": "t36",
       "title": "Hint the name length and steer away from duplicate emoji",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
+      "result": "Name field shows a count from 18 of 24 characters; emoji already used in the crew get a dot, dimming and \"(taken by Ana)\" text, still pickable.",
       "importance": 2,
       "size": "S",
       "flavour": [
@@ -600,7 +601,8 @@
       "id": "t40",
       "title": "Finish the small a11y polish from the audit",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
+      "result": "axe 4.10.3: no violations on Board, Windows, Trips (both views), Resorts. Day titles in the day button name, tally avatars named, hidden h2s fix heading order, profile button and dialog both say \"Your profile\", ISO labels now long dates, day strip and countdown plain text (strip summary via the status region).",
       "importance": 2,
       "size": "S",
       "flavour": [
@@ -616,7 +618,8 @@
       "id": "t41",
       "title": "Tell lookalike names apart and fit the own-row label on phones",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
+      "result": "At 390px 9 person rows fit with the 20-member seed (was 6); tapping a name shows it in full; own row reads \"you\" with the days count hidden on phones; row 40px, compact nudge and board header, hint hidden. Screenshot docs/walkthrough/2026-11-27/t41-after.png.",
       "importance": 3,
       "size": "S",
       "flavour": [
@@ -628,7 +631,7 @@
       "parent": "t31"
     }
   ],
-  "next": "t36",
+  "next": "t13",
   "questions": [
     {
       "question": "Season range",

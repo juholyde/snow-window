@@ -17,7 +17,7 @@ const days = computed(() => (trip.value ? powderDays(trip.value, props.forecasts
 </script>
 
 <template>
-  <div v-if="trip && text" class="countdown" role="status">
+  <div v-if="trip && text" class="countdown">
     <div class="countdown-head">
       <strong>{{ text }}</strong>
       <span>{{ resort?.name ?? 'Your trip' }}</span>

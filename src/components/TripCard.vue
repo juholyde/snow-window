@@ -178,14 +178,14 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
       <ul class="tally">
         <li v-for="g in GROUPS" :key="g.id" :class="`g-${g.id}`">
           <span class="tally-label">{{ g.label }} <strong>{{ t[g.id].length }}</strong></span>
-          <span v-for="p in t[g.id]" :key="p.id" class="who-chip" :title="p.name">{{ p.emoji }}</span>
+          <span v-for="p in t[g.id]" :key="p.id" class="who-chip" :title="p.name"><span aria-hidden="true">{{ p.emoji }}</span><span class="visually-hidden">{{ p.name }}</span></span>
         </li>
       </ul>
 
       <p class="trip-meta">
         <span>Suggested by {{ proposer?.emoji }} {{ proposer?.name ?? 'someone who left' }}</span>
         <span>
-          Free for all of it: <span v-for="p in cover.free" :key="p.id" :title="p.name">{{ p.emoji }}</span>
+          Free for all of it: <span v-for="p in cover.free" :key="p.id" :title="p.name"><span aria-hidden="true">{{ p.emoji }}</span><span class="visually-hidden">{{ p.name }}</span></span>
           <template v-if="!cover.free.length">nobody yet</template>
         </span>
         <span v-if="snow !== null" class="snow-tag" :class="{ fresh: snow >= 5 }">

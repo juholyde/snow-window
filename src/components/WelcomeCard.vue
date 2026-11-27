@@ -54,7 +54,7 @@ function submit() {
         </p>
       </template>
 
-      <ProfileFields v-if="!profile" v-model:name="name" v-model:emoji="emoji" />
+      <ProfileFields v-if="!profile" v-model:name="name" v-model:emoji="emoji" :taken="preview?.members" />
       <p v-else class="welcome-as">
         <span class="avatar">{{ profile.emoji }}</span> As <strong>{{ profile.name }}</strong>
       </p>
