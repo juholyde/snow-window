@@ -3,7 +3,7 @@ import type { Person } from '../src/lib/overlap'
 import { LocalStore } from '../src/lib/store'
 import { allGoing, awaitingAnswer, cleanDraft, coverage, parseStays, sortTrips, stayPrompt, type Trip, type TripDraft, tally } from '../src/lib/trips'
 
-const person = (id: string, days: string[]): Person => ({ id, name: id, emoji: '🏂', days })
+const person = (id: string, days: string[]): Person => ({ id, name: id, emoji: '🏂', days, homeCity: null })
 const draft = (over: Partial<TripDraft> = {}): TripDraft => ({
   resortId: 'baqueira',
   start: '2027-03-26',

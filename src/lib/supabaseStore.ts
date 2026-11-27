@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Area } from '../config/resorts'
 import type { Day } from './dates'
 import type { Person } from './overlap'
 import { cleanDays, cleanEmoji, cleanName } from './rules'
@@ -105,6 +106,8 @@ export class SupabaseStore implements CrewStore {
     this.call<void>('save_profile', { p_name: cleanName(name), p_emoji: cleanEmoji(emoji) })
   setDays = (days: Day[]) => this.call<void>('set_days', { p_days: cleanDays(days) })
 
+  setHomeCity = (city: string | null) => this.call<void>('set_home_city', { p_city: city })
+
   crews = () => this.call<Crew[]>('my_crews')
   createCrew = (name: string) => this.call<string>('create_crew', { p_name: cleanCrewName(name) })
   preview = (code: string) => this.call<CrewPreview | null>('crew_preview', { p_code: code })
@@ -114,6 +117,9 @@ export class SupabaseStore implements CrewStore {
   resetInvite = (crewId: string) => this.call<string>('reset_invite', { p_crew: crewId })
   removeMember = (crewId: string, userId: string) => this.call<void>('remove_member', { p_crew: crewId, p_user: userId })
   leaveCrew = (crewId: string) => this.call<void>('leave_crew', { p_crew: crewId })
+
+  setCrewRegions = (crewId: string, regions: Area[]) =>
+    this.call<void>('set_crew_regions', { p_crew: crewId, p_regions: regions })
 
   loadCrew = (crewId: string) => this.call<CrewBoard>('get_crew', { p_crew: crewId })
   createTrip(crewId: string, draft: TripDraft) {

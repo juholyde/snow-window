@@ -1,7 +1,7 @@
 import { HOLIDAYS, KEY_DATES } from '../config/calendar'
 import { type Day, eachDay, isWeekend } from './dates'
 
-export type Person = { id: string; name: string; emoji: string; days: Day[] }
+export type Person = { id: string; name: string; emoji: string; days: Day[]; homeCity: string | null }
 
 /** How many people are free on each day. */
 export function countByDay(people: readonly Person[]): Map<Day, number> {

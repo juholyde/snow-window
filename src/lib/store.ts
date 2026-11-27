@@ -1,3 +1,5 @@
+import { AREAS, type Area } from '../config/resorts'
+import { CITIES } from '../config/cities'
 import type { Day } from './dates'
 import type { Person } from './overlap'
 import { cleanDays, cleanEmoji, cleanName, MAX_CREW_NAME, MAX_PEOPLE } from './rules'
@@ -19,7 +21,7 @@ import {
 
 /** Who is signed in. A guest is an anonymous account that hasn't been saved with an email yet. */
 export type Session = { userId: string; guest: boolean; email: string | null }
-export type Crew = { id: string; name: string; ownerId: string | null; inviteCode: string; members: number }
+export type Crew = { id: string; name: string; ownerId: string | null; inviteCode: string; members: number; regions: Area[] }
 export type CrewPreview = { id: string; name: string; members: { name: string; emoji: string }[] }
 export type CrewBoard = { people: Person[]; trips: Trip[] }
 
@@ -41,6 +43,8 @@ export interface CrewStore {
   profile(): Promise<Person | null>
   saveProfile(name: string, emoji: string): Promise<void>
   setDays(days: Day[]): Promise<void>
+  /** A city id from CITIES; null clears it. */
+  setHomeCity(city: string | null): Promise<void>
 
   crews(): Promise<Crew[]>
   createCrew(name: string): Promise<string>
@@ -50,6 +54,8 @@ export interface CrewStore {
   resetInvite(crewId: string): Promise<string>
   removeMember(crewId: string, userId: string): Promise<void>
   leaveCrew(crewId: string): Promise<void>
+  /** The areas the crew considers, any member. At least one; deduped, in AREAS order. */
+  setCrewRegions(crewId: string, regions: Area[]): Promise<void>
 
   loadCrew(crewId: string): Promise<CrewBoard>
   createTrip(crewId: string, draft: TripDraft): Promise<string>
@@ -76,6 +82,8 @@ export const ERROR_COPY: Record<string, string> = {
   guest_limit: 'Too many new guests from this network right now. Try again in an hour, or sign in with your saved account.',
   no_profile: 'Pick a name and an emoji first.',
   not_member: "You're not in that crew.",
+  bad_city: "Pick a city from the list.",
+  bad_regions: 'Pick at least one area.',
   not_owner: 'Only the person who made the crew can do that.',
   use_leave: 'Use Leave crew to take yourself out.',
   bad_invite: 'That invite link no longer works. Ask for a new one.',
@@ -108,7 +116,7 @@ const fail = (code: string): never => {
 }
 
 type KeyValue = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
-type LocalCrew = Omit<Crew, 'members'> & { members: { userId: string; joinedAt: string }[] }
+type LocalCrew = Omit<Crew, 'members' | 'regions'> & { regions?: Area[]; members: { userId: string; joinedAt: string }[] }
 type LocalTrip = Trip & { crewId: string }
 type LocalData = { profiles: Record<string, Person>; crews: LocalCrew[]; trips: LocalTrip[]; emails: Record<string, string> }
 
@@ -175,12 +183,13 @@ export class LocalStore implements CrewStore {
   }
 
   async profile() {
-    return this.read().profiles[this.me()] ?? null
+    const p = this.read().profiles[this.me()]
+    return p ? { ...p, homeCity: p.homeCity ?? null } : null
   }
   async saveProfile(name: string, emoji: string) {
     const d = this.read()
     const prev = d.profiles[this.me()]
-    d.profiles[this.me()] = { id: this.me(), name: cleanName(name), emoji: cleanEmoji(emoji), days: prev?.days ?? [] }
+    d.profiles[this.me()] = { id: this.me(), name: cleanName(name), emoji: cleanEmoji(emoji), days: prev?.days ?? [], homeCity: prev?.homeCity ?? null }
     this.write(d)
   }
   async setDays(days: Day[]) {
@@ -189,11 +198,18 @@ export class LocalStore implements CrewStore {
     p.days = cleanDays(days)
     this.write(d)
   }
+  async setHomeCity(city: string | null) {
+    if (city !== null && !CITIES.some((c) => c.id === city)) fail('bad_city')
+    const d = this.read()
+    const p = d.profiles[this.me()] ?? fail('no_profile')
+    p.homeCity = city
+    this.write(d)
+  }
 
   async crews(): Promise<Crew[]> {
     return this.read()
       .crews.filter((c) => c.members.some((m) => m.userId === this.me()))
-      .map((c) => ({ ...c, members: c.members.length }))
+      .map((c) => ({ ...c, members: c.members.length, regions: c.regions ?? ['spain'] }))
   }
   async createCrew(name: string) {
     const d = this.read()
@@ -254,13 +270,22 @@ export class LocalStore implements CrewStore {
     this.write(drop(d, crewId, this.me()))
   }
 
+  async setCrewRegions(crewId: string, regions: Area[]) {
+    const d = this.read()
+    const crew = this.member(d, crewId)
+    const known = AREAS.map((a) => a.id)
+    if (!regions.length || regions.some((r) => !known.includes(r))) fail('bad_regions')
+    crew.regions = known.filter((a) => regions.includes(a))
+    this.write(d)
+  }
+
   async loadCrew(crewId: string): Promise<CrewBoard> {
     const d = this.read()
     const crew = this.member(d, crewId)
     return {
       people: crew.members.flatMap((m) => {
         const p = d.profiles[m.userId]
-        return p ? [p] : []
+        return p ? [{ ...p, homeCity: p.homeCity ?? null }] : []
       }),
       trips: d.trips
         .filter((t) => t.crewId === crewId)

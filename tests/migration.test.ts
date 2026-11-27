@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-const migrations = ['20261125160000_app_snow_window__init.sql', '20261126120000_app_snow_window__stays.sql', '20261127120000_app_snow_window__cars.sql'].map((f) =>
+const migrations = ['20261125160000_app_snow_window__init.sql', '20261126120000_app_snow_window__stays.sql', '20261127120000_app_snow_window__cars.sql', '20261128120000_app_snow_window__regions.sql'].map((f) =>
   readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8'),
 )
 
@@ -243,5 +243,53 @@ describe('cars', () => {
     expect((await seated())?.map((c) => c.id)).toEqual([big])
     await as(owner, 'select app_snow_window.remove_car($1)', [big])
     expect(await seated()).toEqual([])
+  })
+})
+
+describe('regions and home city', () => {
+  it('accepts every resort id the app lists and refuses unknown ones', async () => {
+    const { RESORTS } = await import('../src/config/resorts')
+    const sql = (await import('node:fs')).readFileSync(new URL(`../supabase/migrations/${'20261128120000_app_snow_window__regions.sql'}`, import.meta.url), 'utf8')
+    const listed = [...(sql.match(/resort_id in\s*\(([^)]*)\)/)?.[1] ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1])
+    expect(listed.sort()).toEqual(RESORTS.map((r) => r.id).sort())
+    expect((await db.query("select conname from pg_constraint where conname = 'trips_resort_id_check'")).rows).toHaveLength(1)
+
+    const juho = await newUser('Juho')
+    const { crew } = await crewWith(juho)
+    await as(juho, 'select app_snow_window.create_trip($1, $2, $3, $4, null, null)', [crew, 'ruka', '2027-02-01', '2027-02-01'])
+    await expect(
+      as(juho, 'select app_snow_window.create_trip($1, $2, $3, $4, null, null)', [crew, 'mordor', '2027-02-01', '2027-02-01']),
+    ).rejects.toThrow(/trips_resort_id_check/)
+  })
+
+  it('stores a home city by its shape, clears it with null, and returns it with the crew', async () => {
+    const juho = await newUser('Juho')
+    const laura = await newUser('Laura')
+    const { crew } = await crewWith(juho, laura)
+    await as(juho, "select app_snow_window.set_home_city('andorra-la-vella')")
+    for (const bad of ['Barcelona', '', 'a b', 'x'.repeat(41)])
+      await expect(as(juho, 'select app_snow_window.set_home_city($1)', [bad])).rejects.toThrow(/bad_city/)
+    expect(await as(laura, 'select app_snow_window.get_crew($1)', [crew])).toMatchObject({
+      people: [{ name: 'Juho', homeCity: 'andorra-la-vella' }, { name: 'Laura', homeCity: null }],
+    })
+    expect(await as(juho, 'select app_snow_window.get_profile()')).toMatchObject({ homeCity: 'andorra-la-vella' })
+    await as(juho, 'select app_snow_window.set_home_city(null)')
+    expect(await as(juho, 'select app_snow_window.get_profile()')).toMatchObject({ homeCity: null })
+  })
+
+  it('lets any member set a crew\'s areas: at least one, known, deduped and in a stable order', async () => {
+    const juho = await newUser('Juho')
+    const laura = await newUser('Laura')
+    const outsider = await newUser('Out')
+    const { crew } = await crewWith(juho, laura)
+    const regions = async () => ((await as<{ regions: string[] }[]>(juho, 'select app_snow_window.my_crews()'))[0] as { regions: string[] }).regions
+    expect(await regions()).toEqual(['spain'])
+    await as(laura, "select app_snow_window.set_crew_regions($1, '{sweden,alps,sweden}')", [crew])
+    expect(await regions()).toEqual(['alps', 'sweden'])
+    await expect(as(juho, "select app_snow_window.set_crew_regions($1, '{}')", [crew])).rejects.toThrow(/bad_regions/)
+    await expect(as(juho, "select app_snow_window.set_crew_regions($1, '{alps,norway}')", [crew])).rejects.toThrow(/bad_regions/)
+    await expect(as(juho, 'select app_snow_window.set_crew_regions($1, null)', [crew])).rejects.toThrow(/bad_regions/)
+    await expect(as(outsider, "select app_snow_window.set_crew_regions($1, '{alps}')", [crew])).rejects.toThrow(/not_member/)
+    expect(await regions()).toEqual(['alps', 'sweden'])
   })
 })

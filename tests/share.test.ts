@@ -3,7 +3,7 @@ import { inviteMessage, nudgeMessage, tripSummary } from '../src/lib/share'
 import { cardFilename, cardLayout } from '../src/lib/shareCard'
 import type { Trip } from '../src/lib/trips'
 
-const p = (id: string, emoji: string) => ({ id, name: id, emoji, days: [] })
+const p = (id: string, emoji: string) => ({ id, name: id, emoji, days: [], homeCity: null })
 const people = [p('Ana', '🏂'), p('Bo', '⛷️'), p('Cy', '🎿')]
 const trip = (over: Partial<Trip> = {}): Trip => ({
   id: 't', proposerId: 'Ana', resortId: 'cerler', start: '2027-01-02', end: '2027-01-05', title: null, note: null,

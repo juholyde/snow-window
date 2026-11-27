@@ -4,7 +4,7 @@ import { cleanDays } from '../src/lib/rules'
 import { modeFor, paint, span, tapRange } from '../src/lib/selection'
 import { inviteLink, LocalStore, parseInvite } from '../src/lib/store'
 
-const person = (name: string, days: string[]): Person => ({ id: name, name, emoji: '🏂', days })
+const person = (name: string, days: string[]): Person => ({ id: name, name, emoji: '🏂', days, homeCity: null })
 const memory = () => {
   const m = new Map<string, string>()
   return {

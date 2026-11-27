@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { fold, icsFilename, tripIcs } from '../src/lib/ics'
 import type { Trip } from '../src/lib/trips'
 
-const people = [{ id: 'Ana', name: 'Ana', emoji: '🏂', days: [] }]
+const people = [{ id: 'Ana', name: 'Ana', emoji: '🏂', days: [], homeCity: null }]
 const trip = (over: Partial<Trip> = {}): Trip => ({
   id: 'abc', proposerId: 'Ana', resortId: 'cerler', start: '2027-01-30', end: '2027-02-01', title: null, note: null,
   status: 'on', createdAt: '0', responses: { Ana: 'yes' }, stayBudget: null, driving: null,
