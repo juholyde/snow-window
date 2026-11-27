@@ -566,7 +566,7 @@
       "id": "t38",
       "title": "Keep focus after actions and announce changes",
       "kind": "labour",
-      "status": "todo",
+      "status": "doing",
       "importance": 4,
       "size": "S",
       "flavour": [
@@ -607,6 +607,21 @@
       "doneWhen": "axe-core shows no warnings on all four tabs, and each listed item is named in visible or accessible text.",
       "parent": "t29",
       "notes": "Also from t37: overlap and forecast cells still use ISO-date aria-labels (an app test selects them by that text); switch to the long date format and update the test."
+    },
+    {
+      "id": "t41",
+      "title": "Tell lookalike names apart and fit the own-row label on phones",
+      "kind": "labour",
+      "status": "todo",
+      "importance": 3,
+      "size": "S",
+      "flavour": [
+        "meaningful"
+      ],
+      "milestone": "m1",
+      "why": "After t31 two Ingebor… rows still look the same at 390px (tooltips need hover), the own row clips to \"you · 0 da…\", and only about 7 rows fit under the banner and header.",
+      "doneWhen": "On a 390px phone, tapping a name shows it in full, the own-row label is not clipped, and at least 9 person rows fit on first load with the 20-member seed; screenshot kept.",
+      "parent": "t31"
     }
   ],
   "next": "t38",
