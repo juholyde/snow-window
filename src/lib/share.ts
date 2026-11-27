@@ -25,3 +25,10 @@ export function tripSummary(trip: Trip, people: readonly Person[], crewName: str
 export function inviteMessage(crewName: string, crewUrl: string): string {
   return `⛷️ Join ${crewName} on Snow Window: add the days you can ski and we'll find the dates that work.\n${crewUrl}`
 }
+
+/** A nudge for the people who have not answered a trip, to paste into the crew chat. */
+export function nudgeMessage(trip: Trip, waiting: readonly Person[], crewUrl: string): string {
+  const resort = RESORTS.find((r) => r.id === trip.resortId)?.name ?? trip.resortId
+  const when = trip.start === trip.end ? formatLong(trip.start) : `${formatLong(trip.start)} – ${formatLong(trip.end)}`
+  return `⛷️ ${names(waiting)}: can you answer the ${trip.title || resort} trip (${when})? Going / Maybe / Can't here: ${crewUrl}`
+}

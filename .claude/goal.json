@@ -636,7 +636,8 @@
       "id": "t42",
       "title": "Copy a nudge to people who have not answered a trip",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
+      "result": "Open/on trip cards list who has not answered and offer Copy nudge (nudgeMessage in share.ts, tests); hidden when everyone answered or cancelled.",
       "importance": 4,
       "size": "S",
       "flavour": [
@@ -664,7 +665,7 @@
       "parent": "t30"
     }
   ],
-  "next": "t42",
+  "next": "t43",
   "questions": [
     {
       "question": "Season range",

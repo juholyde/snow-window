@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { inviteMessage, tripSummary } from '../src/lib/share'
+import { inviteMessage, nudgeMessage, tripSummary } from '../src/lib/share'
 import { cardFilename, cardLayout } from '../src/lib/shareCard'
 import type { Trip } from '../src/lib/trips'
 
@@ -58,5 +58,18 @@ describe('share card layout', () => {
     expect(L.stay).toBe('Hotel Aneto')
     expect(L.dates).toContain('day trip')
     expect(cardFilename(trip())).toBe('snow-window-cerler-2027-01-02.png')
+  })
+})
+
+describe('nudge message', () => {
+  it('names who is waiting, the trip, and ends with the link', () => {
+    const m = nudgeMessage(trip({ title: 'Baqueira weekend' }), [people[0], people[1]] as typeof people, URL)
+    expect(m).toContain('🏂 Ana, ⛷️ Bo: can you answer the Baqueira weekend trip (')
+    expect(m).toContain('Going / Maybe')
+    expect(m.endsWith(URL)).toBe(true)
+  })
+  it('falls back to the resort name and a single day', () => {
+    const m = nudgeMessage(trip({ start: '2027-01-02', end: '2027-01-02' }), [people[2]] as typeof people, URL)
+    expect(m).toContain('Cerler trip (Sat 2 Jan)')
   })
 })

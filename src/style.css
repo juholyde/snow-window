@@ -363,6 +363,7 @@ body { overflow: hidden; }
 .seg.answer > button { flex: 1; padding: 10px 12px; font-size: 15px; }
 .tally { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .tally li { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: var(--snow-0); font-size: 13px; }
+.waiting-on { margin: 0; font-size: 13px; color: var(--ink-2); }
 .tally-label { color: var(--ink-2); font-weight: 650; }
 .tally-label strong { color: var(--ink); }
 .tally .g-yes { background: var(--orange-wash); }

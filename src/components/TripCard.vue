@@ -4,7 +4,7 @@ import { RESORTS } from '../config/resorts'
 import { addDays, type Day, formatLong } from '../lib/dates'
 import type { Person } from '../lib/overlap'
 import { downloadIcs, tripIcs } from '../lib/ics'
-import { tripSummary } from '../lib/share'
+import { nudgeMessage, tripSummary } from '../lib/share'
 import { shareTripCard } from '../lib/shareCard'
 import { type Answer, allGoing, coverage, nights, type StayAction, type Trip, type TripStatus, tally } from '../lib/trips'
 import type { DayWeather } from '../lib/weather'
@@ -89,6 +89,23 @@ async function copySummary() {
   copied.value = true
   clearTimeout(copiedTimer)
   copiedTimer = setTimeout(() => (copied.value = false), 2500)
+}
+
+// Others who have not answered (my own pending answer has its own badge).
+const waiting = computed(() => (closed.value ? [] : t.value.none.filter((p) => !props.mine.some((m) => m.id === p.id))))
+const nudged = ref(false)
+let nudgedTimer: ReturnType<typeof setTimeout> | undefined
+async function copyNudge() {
+  const text = nudgeMessage(props.trip, waiting.value, props.crewUrl)
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch {
+    window.prompt('Copy this nudge:', text)
+    return
+  }
+  nudged.value = true
+  clearTimeout(nudgedTimer)
+  nudgedTimer = setTimeout(() => (nudged.value = false), 2500)
 }
 
 const sharing = ref(false)
@@ -182,6 +199,8 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
         </li>
       </ul>
 
+      <p v-if="waiting.length" class="waiting-on">Waiting on {{ waiting.map((p) => `${p.emoji} ${p.name}`).join(', ') }}</p>
+
       <p class="trip-meta">
         <span>Suggested by {{ proposer?.emoji }} {{ proposer?.name ?? 'someone who left' }}</span>
         <span>
@@ -199,6 +218,9 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
 
       <footer class="trip-actions">
         <button type="button" class="ghost" @click="emit('show')">Show on board</button>
+        <button v-if="waiting.length" type="button" class="ghost" @click="copyNudge">
+          <AppIcon :name="nudged ? 'check' : 'copy'" :size="15" /> {{ nudged ? 'Nudge copied' : 'Copy nudge' }}
+        </button>
         <button v-if="trip.status === 'on'" type="button" class="ghost" @click="copySummary">
           <AppIcon :name="copied ? 'check' : 'copy'" :size="15" /> {{ copied ? 'Summary copied' : 'Copy summary' }}
         </button>

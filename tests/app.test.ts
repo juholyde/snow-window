@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { flushPromises } from '@vue/test-utils'
-import { afterEach, beforeEach, expect, it } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { closeApps, openApp, resetBrowser, seedCrew, seedTrip, storeFor } from './helpers/app'
 
 beforeEach(resetBrowser)
@@ -223,4 +223,32 @@ it('Mark it on and Booked it keep focus on a stable target', async () => {
 
   await click(buttonNamed('Booked it'))
   expect(document.activeElement?.textContent?.trim()).toBe('Not booked')
+})
+
+it('Copy nudge names the people who have not answered, and is hidden when only I am left', async () => {
+  const written: string[] = []
+  vi.stubGlobal('navigator', { clipboard: { writeText: async (t: string) => void written.push(t) } })
+  const days = ['2026-12-05', '2026-12-06']
+  const seed = await seedCrew('Pyrenees gang', [
+    { id: 'ann', name: 'Ann', days },
+    { id: 'ben', name: 'Ben', days },
+    { id: 'cy', name: 'Cy', days },
+  ])
+  await seedTrip(seed, { start: '2026-12-05', end: '2026-12-06' })
+  await openApp('ben')
+  await click(tab(/Trips/))
+
+  expect(document.querySelector('.waiting-on')?.textContent).toContain('Cy')
+  expect(document.querySelector('.waiting-on')?.textContent).not.toContain('Ben')
+  await click(buttonNamed(/Copy nudge/))
+  expect(written[0]).toContain('Cy: can you answer the Powder run trip')
+  expect(written[0]).not.toContain('Ben')
+
+  closeApps()
+  const tripId = (await storeFor('ann').loadCrew(seed.crewId)).trips[0]?.id ?? ''
+  await storeFor('cy').respond(tripId, 'maybe')
+  await openApp('ben')
+  await click(tab(/Trips/))
+  expect(document.querySelector('.waiting-on')).toBeNull()
+  expect(buttonNamed(/Copy nudge/)).toBeUndefined()
 })
