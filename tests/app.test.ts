@@ -185,3 +185,39 @@ it('my own row is listed first on the board, above longer-standing members', asy
   const rows = [...document.querySelectorAll('.person-name strong')].map((e) => e.textContent)
   expect(rows).toEqual(['Ben', 'Ann'])
 })
+
+it('suggesting a trip focuses and highlights its card heading, and the status region says it', async () => {
+  await seedCrew('Pyrenees gang', [
+    { id: 'ann', name: 'Ann', days: ['2026-12-05', '2026-12-06'] },
+    { id: 'ben', name: 'Ben', days: ['2026-12-05', '2026-12-06'] },
+  ])
+  await openApp('ann')
+  await click(tab(/Trips/))
+  await click(document.querySelector('button.pick'))
+  await click(buttonNamed(/Suggest to the crew/))
+
+  const card = document.querySelector('[data-trip]')
+  expect(card).not.toBeNull()
+  expect(document.activeElement).toBe(card?.querySelector('h3'))
+  expect(card?.classList.contains('fresh')).toBe(true)
+  const status = document.querySelector('[role=status][aria-live=polite]')
+  expect(status?.textContent).toContain('Suggested. The crew can answer now.')
+  expect(document.querySelectorAll('[role=status]').length).toBe(1)
+})
+
+it('Mark it on and Booked it keep focus on a stable target', async () => {
+  const seed = await seedCrew('Pyrenees gang', [{ id: 'ann', name: 'Ann', days: ['2026-12-05', '2026-12-06', '2026-12-07'] }])
+  await seedTrip(seed, { start: '2026-12-05', end: '2026-12-07' })
+  await openApp('ann')
+  await click(tab(/Trips/))
+  await click(buttonNamed('Mark it on'))
+  expect(document.activeElement?.tagName).toBe('H3')
+
+  await click(buttonNamed(/Paste answer/))
+  await typeInto(document.querySelector('textarea'), 'STAY | Hotel Tuca | https://example.com/tuca | 60 | Ski-in')
+  await click(buttonNamed('Add places'))
+  expect(document.activeElement?.id).toMatch(/^stay-/)
+
+  await click(buttonNamed('Booked it'))
+  expect(document.activeElement?.textContent?.trim()).toBe('Not booked')
+})

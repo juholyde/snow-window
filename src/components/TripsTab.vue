@@ -33,6 +33,7 @@ const props = defineProps<{
   resortId: string
   range: Range | null
   busy: boolean
+  fresh?: string | null
   crewName: string
   crewUrl: string
 }>()
@@ -44,6 +45,7 @@ const emit = defineEmits<{
   status: [tripId: string, personId: string, status: TripStatus]
   show: [range: Range]
   stay: [action: StayAction]
+  announce: [text: string]
 }>()
 
 // Opening Suggest with dates already picked (e.g. from Snow windows) brings them into view.
@@ -184,9 +186,11 @@ const waiting = computed(
         :mine="mine"
         :forecast="forecasts?.[t.resortId] ?? null"
         :busy="busy"
+        :fresh="fresh === t.id"
         :crew-name="crewName"
         :crew-url="crewUrl"
         @stay="(a) => emit('stay', a)"
+        @announce="(m) => emit('announce', m)"
         @respond="(pid, a) => emit('respond', t.id, pid, a)"
         @status="(pid, s) => emit('status', t.id, pid, s)"
         @show="emit('show', { start: t.start, end: t.end })"

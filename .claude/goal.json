@@ -505,7 +505,7 @@
       "id": "t34",
       "title": "Show the new trip right after Suggest",
       "kind": "labour",
-      "status": "todo",
+      "status": "done",
       "importance": 3,
       "size": "S",
       "flavour": [
@@ -514,7 +514,8 @@
       "milestone": "m2",
       "why": "t25 walkthrough: Suggest lands on Answer with the new trip out of view.",
       "doneWhen": "After suggesting, the new trip card scrolls into view and is briefly highlighted; app test covers it.",
-      "parent": "t25"
+      "parent": "t25",
+      "result": "After Suggest the new trip card heading takes focus, scrolls into view (smooth unless reduced motion) and the card is highlighted for 2.5s; app test covers it."
     },
     {
       "id": "t35",
@@ -566,7 +567,7 @@
       "id": "t38",
       "title": "Keep focus after actions and announce changes",
       "kind": "labour",
-      "status": "doing",
+      "status": "done",
       "importance": 4,
       "size": "S",
       "flavour": [
@@ -575,7 +576,8 @@
       "milestone": "m2",
       "why": "t29 audit: focus drops to body after Suggest, Mark it on, Add places and Booked it; toasts and banners are v-if regions inserted with their text, which screen readers may not announce.",
       "doneWhen": "Focus lands on a sensible target after each of those actions, and one always-mounted polite status region carries toast and banner messages; App test checks focus after Suggest.",
-      "parent": "t29"
+      "parent": "t29",
+      "result": "Focus moves to the new card heading (Suggest, Mark it on/Reopen), the Where-to-stay heading (Add places) and the Not booked button (Booked it); one always-mounted polite status region carries toasts, nudge and celebrate text."
     },
     {
       "id": "t39",
@@ -624,7 +626,7 @@
       "parent": "t31"
     }
   ],
-  "next": "t38",
+  "next": "t33",
   "questions": [
     {
       "question": "Season range",

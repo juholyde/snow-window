@@ -377,6 +377,10 @@ body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .flakes { display: none; } }
 .trip.on { box-shadow: inset 0 0 0 2px var(--orange); border-color: transparent; }
 .trip.cancelled { opacity: 0.6; }
+.trip h3:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+.trip.fresh { animation: trip-fresh 2.4s ease-out; }
+@keyframes trip-fresh { 0%, 60% { box-shadow: 0 0 0 4px var(--orange); } 100% { box-shadow: 0 0 0 4px transparent; } }
+@media (prefers-reduced-motion: reduce) { .trip.fresh { animation: none; box-shadow: 0 0 0 4px var(--orange); } }
 .trip h3 { margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; line-height: 1; text-transform: uppercase; }
 .trip-sub { margin: 3px 0 0; font-size: 14px; font-weight: 650; }
 .trip-len { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 10px; background: var(--ink); color: var(--snow-1); font-size: 11px; font-weight: 650; line-height: 1; }

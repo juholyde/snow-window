@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import AccountDialog from './components/AccountDialog.vue'
 import AppIcon from './components/AppIcon.vue'
 import AvailabilityTimeline from './components/AvailabilityTimeline.vue'
@@ -44,6 +44,10 @@ const trips = shallowRef<Trip[]>([])
 const loaded = ref(false)
 const busy = ref(false)
 const toast = ref<{ text: string; error?: boolean } | null>(null)
+/** Messages for the always-mounted live region; screen readers miss text that arrives with its own element. */
+const announced = ref<string[]>([])
+/** The trip just suggested: its card is highlighted for a moment. */
+const freshTrip = ref<string | null>(null)
 const focused = ref<Day | null>(null)
 const highlight = ref<{ start: Day; end: Day } | null>(null)
 const forecasts = shallowRef<Forecasts | null>(null)
@@ -73,10 +77,25 @@ const counts = computed(() => countByDay(people.value))
 const marked = computed(() => people.value.filter((p) => p.days.length).length)
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined
+let announceTimer: ReturnType<typeof setTimeout> | undefined
+function announce(text: string) {
+  announced.value = [...announced.value, text]
+  clearTimeout(announceTimer)
+  announceTimer = setTimeout(() => (announced.value = []), 8000)
+}
 function say(text: string, error = false) {
+  announce(text)
   toast.value = { text, error }
   clearTimeout(toastTimer)
   toastTimer = setTimeout(() => (toast.value = null), error ? 6000 : 3500)
+}
+
+/** Moves focus once the DOM has updated; falls back to the Trips view switch when the target is gone. */
+async function focusAt(selector: string) {
+  await nextTick()
+  const el = document.querySelector<HTMLElement>(selector) ?? document.querySelector<HTMLElement>('.trips-bar [aria-selected=true]')
+  el?.focus({ preventScroll: true })
+  return el
 }
 
 /** Runs one store call with the busy flag and turns failures into a toast. */
@@ -357,6 +376,11 @@ const step = computed(() => {
   return nextStep(state)
 })
 
+watch(
+  () => step.value?.text,
+  (text) => text && announce(text),
+)
+
 function runStep(kind: StepKind) {
   if (kind === 'answer') answerTrips()
   else if (kind === 'nudge') copyInvite()
@@ -373,25 +397,49 @@ function suggestFrom(w: TripWindow) {
   tab.value = 'trips'
 }
 
-async function tripAction(run: () => Promise<unknown>, ok?: string) {
-  const done = Boolean(await act(run, ok))
-  if (done) await refresh()
-  return done
+async function tripAction<T>(run: () => Promise<T>, ok?: string) {
+  const res = await act(run, ok)
+  if (res) await refresh()
+  return res
+}
+
+const tripSel = (id: string) => `[data-trip="${id}"]`
+let freshTimer: ReturnType<typeof setTimeout> | undefined
+async function showNewTrip(id: string) {
+  freshTrip.value = id
+  clearTimeout(freshTimer)
+  freshTimer = setTimeout(() => (freshTrip.value = null), 2500)
+  const heading = await focusAt(`${tripSel(id)} h3`)
+  const smooth = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  heading?.scrollIntoView?.({ block: 'center', behavior: smooth ? 'smooth' : 'auto' })
 }
 
 async function createTrip(_personId: string, draft: TripDraft) {
   const id = crewId.value
   if (!id) return
-  if (await tripAction(() => props.store.createTrip(id, draft), 'Suggested. The crew can answer now.')) {
-    tripRange.value = null
-    tripsPicked.value = 'answer'
-  }
+  const res = await tripAction(() => props.store.createTrip(id, draft), 'Suggested. The crew can answer now.')
+  if (!res) return
+  tripRange.value = null
+  tripsPicked.value = 'answer'
+  await showNewTrip(res.value)
 }
 const respond = (tripId: string, _personId: string, answer: Answer) => tripAction(() => props.store.respond(tripId, answer))
-const setStatus = (tripId: string, _personId: string, status: TripStatus) =>
-  tripAction(() => props.store.setTripStatus(tripId, status), status === 'on' ? "It's on! Everyone can see it." : undefined)
+async function setStatus(tripId: string, _personId: string, status: TripStatus) {
+  const res = await tripAction(() => props.store.setTripStatus(tripId, status), status === 'on' ? "It's on! Everyone can see it." : undefined)
+  // The button that was pressed is replaced (or the card is gone): land on the card heading.
+  if (res) await focusAt(`${tripSel(tripId)} h3`)
+}
 
-function stayAction(a: StayAction) {
+async function stayDone(a: StayAction, res: unknown) {
+  if (!res) return
+  if (a.kind === 'add') await focusAt(`#stay-${a.tripId}`)
+  else if (a.kind === 'book') await focusAt(a.stayId ? `${tripSel(a.tripId)} li.booked [data-book]` : `#stay-${a.tripId}`)
+}
+
+async function stayAction(a: StayAction) {
+  await stayDone(a, await runStay(a))
+}
+function runStay(a: StayAction) {
   const s = props.store
   switch (a.kind) {
     case 'prefs':
@@ -543,7 +591,7 @@ onBeforeUnmount(() => {
       <!-- Board: kept mounted so the timeline keeps its scroll position -->
       <section v-show="tab === 'board'" id="panel-board" class="panel board-panel" role="tabpanel" aria-labelledby="tab-board">
         <div class="board">
-          <div v-if="step" class="trip-nudge" role="status">
+          <div v-if="step" class="trip-nudge">
             <span>{{ step.text }}</span>
             <button v-if="step.button" type="button" class="primary" @click="runStep(step.kind)">{{ step.button }}</button>
           </div>
@@ -653,6 +701,7 @@ onBeforeUnmount(() => {
           :resort-id="resortId"
           :range="tripRange"
           :busy="busy"
+          :fresh="freshTrip"
           :crew-name="crew?.name ?? ''"
           :crew-url="crewUrl"
           @view="(v) => (tripsPicked = v)"
@@ -661,6 +710,7 @@ onBeforeUnmount(() => {
           @respond="respond"
           @status="setStatus"
           @show="(r) => showOnBoard(r.start, r)"
+          @announce="announce"
           @stay="stayAction"
         />
       </section>
@@ -711,6 +761,7 @@ onBeforeUnmount(() => {
       @sign-out="signOut"
     />
 
-    <div v-if="toast" class="toast" :class="{ error: toast.error }" role="status">{{ toast.text }}</div>
+    <div class="visually-hidden" role="status" aria-live="polite" aria-atomic="false">{{ announced.join(' ') }}</div>
+    <div v-if="toast" class="toast" :class="{ error: toast.error }" aria-hidden="true">{{ toast.text }}</div>
   </div>
 </template>

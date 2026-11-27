@@ -17,6 +17,7 @@ const props = defineProps<{
   mine: Person[]
   forecast: Record<Day, DayWeather> | null
   busy: boolean
+  fresh?: boolean
   crewName: string
   crewUrl: string
 }>()
@@ -25,6 +26,7 @@ const emit = defineEmits<{
   status: [personId: string, status: TripStatus]
   show: []
   stay: [action: StayAction]
+  announce: [text: string]
 }>()
 
 const resort = computed(() => RESORTS.find((r) => r.id === props.trip.resortId))
@@ -49,9 +51,11 @@ watch(
       return
     }
     celebrate.value = true
+    emit('announce', CELEBRATE_TEXT)
   },
   { immediate: true },
 )
+const CELEBRATE_TEXT = "Everyone's in! The whole crew said Going."
 const FLAKES = Array.from({ length: 14 }, (_, i) => ({ x: (i * 37) % 100, delay: (i % 5) * 0.25, size: 4 + (i % 3) * 2 }))
 const isMine = computed(() => props.mine.some((p) => p.id === props.trip.proposerId))
 const closed = computed(() => props.trip.status === 'cancelled')
@@ -120,7 +124,7 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
 </script>
 
 <template>
-  <article class="trip" :class="[trip.status, { waiting: unanswered }]">
+  <article class="trip" :class="[trip.status, { waiting: unanswered, fresh }]" :data-trip="trip.id">
     <img
       v-if="resort"
       class="trip-photo"
@@ -133,7 +137,7 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
     <div class="trip-body">
       <header class="trip-head">
         <div>
-          <h3>{{ trip.title || resort?.name }}</h3>
+          <h3 tabindex="-1">{{ trip.title || resort?.name }}</h3>
           <p class="trip-sub">
             {{ dates }} · {{ n === 0 ? 'day trip' : `${n} ${n === 1 ? 'night' : 'nights'}` }}<template v-if="trip.title"> · {{ resort?.name }}</template>
           </p>
@@ -143,7 +147,7 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
         <span v-else-if="unanswered" class="badge ask">Your answer?</span>
       </header>
 
-      <aside v-if="celebrate" class="celebrate" role="status">
+      <aside v-if="celebrate" class="celebrate">
         <span class="flakes" aria-hidden="true">
           <i v-for="(f, i) in FLAKES" :key="i" :style="{ left: `${f.x}%`, animationDelay: `${f.delay}s`, width: `${f.size}px`, height: `${f.size}px` }" />
         </span>

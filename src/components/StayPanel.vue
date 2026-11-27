@@ -66,7 +66,7 @@ function addPasted() {
 <template>
   <section class="stay-panel" :aria-labelledby="`stay-${trip.id}`">
     <header class="stay-head">
-      <h3 :id="`stay-${trip.id}`">Where to stay</h3>
+      <h3 :id="`stay-${trip.id}`" tabindex="-1">Where to stay</h3>
       <span class="stay-booked" v-if="booked"><AppIcon name="check" :size="14" /> Booked: {{ booked.name }}</span>
       <span v-else class="muted-note">{{ n }} {{ n === 1 ? 'night' : 'nights' }} · pick a place together</span>
     </header>
@@ -126,12 +126,13 @@ function addPasted() {
             v-if="s.id !== trip.bookedStay"
             type="button"
             class="ghost small-btn"
+            data-book
             :disabled="busy"
             @click="emit('act', { kind: 'book', tripId: trip.id, stayId: s.id })"
           >
             Booked it
           </button>
-          <button v-else type="button" class="ghost small-btn" :disabled="busy" @click="emit('act', { kind: 'book', tripId: trip.id, stayId: null })">
+          <button v-else type="button" class="ghost small-btn" data-book :disabled="busy" @click="emit('act', { kind: 'book', tripId: trip.id, stayId: null })">
             Not booked
           </button>
           <button
