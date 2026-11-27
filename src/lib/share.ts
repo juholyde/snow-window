@@ -17,7 +17,7 @@ export function tripSummary(trip: Trip, people: readonly Person[], crewName: str
   if (t.maybe.length) lines.push(`Maybe: ${names(t.maybe)}`)
   const stay = trip.stays.find((s) => s.id === trip.bookedStay)
   if (stay) lines.push(`Stay: ${stay.name}${stay.url ? ` ${stay.url}` : ''}`)
-  lines.push(`${crewName} crew: ${crewUrl}`)
+  lines.push(`Board for ${crewName}: ${crewUrl}`)
   return lines.join('\n')
 }
 

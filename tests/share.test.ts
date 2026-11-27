@@ -20,7 +20,7 @@ describe('trip summary', () => {
     expect(s).toContain('Maybe: ⛷️ Bo')
     expect(s).not.toContain('Cy')
     expect(s).not.toContain('Stay:')
-    expect(s.endsWith(`Pyrenees Pals crew: ${URL}`)).toBe(true)
+    expect(s.endsWith(`Board for Pyrenees Pals: ${URL}`)).toBe(true)
     expect(s.split('\n').slice(0, -1).join('\n')).not.toMatch(/[*#_]/)
   })
   it('adds the booked stay and drops Maybe when empty', () => {
