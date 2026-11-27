@@ -4,7 +4,7 @@ import { type Day, daysBetween, formatLong, formatMonth, todayLocal } from '../l
 import { type DayMark, markDay, type Person } from '../lib/overlap'
 import { modeFor, type PaintMode, paint, type Range, span, tapRange } from '../lib/selection'
 import { MAX_TRIP_DAYS } from '../lib/trips'
-import { RESORTS } from '../config/resorts'
+import { RESORTS, type Resort } from '../config/resorts'
 import type { DayWeather } from '../lib/weather'
 import AppIcon from './AppIcon.vue'
 import PickMenu from './PickMenu.vue'
@@ -17,6 +17,7 @@ const props = defineProps<{
   focused: Day | null
   highlight: { start: Day; end: Day } | null
   resortId: string
+  resorts: Resort[]
   forecast: Record<Day, DayWeather> | null
   /** 'pick' turns taps and drags into picking a date range (trip suggestions) instead of marking days. */
   mode?: 'paint' | 'pick'
@@ -274,7 +275,7 @@ function scrollToDay(day: Day, smooth = true, contextDays = 3) {
   box.scrollTo({ left: Math.max(0, left - nameCol - contextDays * el.offsetWidth), behavior: smooth && !matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto" })
 }
 const monthOptions = computed(() => months.value.map((m) => ({ value: m.start, label: m.label })))
-const resortOptions = RESORTS.map((r) => ({ value: r.id, label: r.name, hint: r.region }))
+const resortOptions = computed(() => props.resorts.map((r) => ({ value: r.id, label: r.name, hint: r.region })))
 const resortName = computed(() => RESORTS.find((r) => r.id === props.resortId)?.name ?? 'Pick a resort')
 defineExpose({ scrollToDay })
 </script>

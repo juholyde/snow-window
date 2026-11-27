@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RESORTS } from '../config/resorts'
+import type { Resort } from '../config/resorts'
 import { type Day, addDays, formatWeekday, todayLocal } from '../lib/dates'
 import type { Forecasts } from '../lib/weather'
 import AppIcon from './AppIcon.vue'
 import ResortTravel from './ResortTravel.vue'
 
-const props = defineProps<{ forecasts: Forecasts | null; resortId: string; error: boolean }>()
-const emit = defineEmits<{ use: [id: string] }>()
+const props = defineProps<{ forecasts: Forecasts | null; resortId: string; resorts: Resort[]; homeCity: string | null; error: boolean }>()
+const emit = defineEmits<{ use: [id: string]; account: [] }>()
 
 const base = import.meta.env.BASE_URL
 
@@ -15,7 +15,7 @@ const week: Day[] = Array.from({ length: 7 }, (_, i) => addDays(todayLocal(), i)
 
 /** Resorts with the most snow in the coming week first. */
 const cards = computed(() =>
-  RESORTS.map((r) => {
+  props.resorts.map((r) => {
     const days = week.map((d) => ({ day: d, w: props.forecasts?.[r.id]?.[d] ?? null }))
     const snow = days.reduce((sum, x) => sum + (x.w?.snowCm ?? 0), 0)
     return { r, days, snow }
@@ -45,7 +45,7 @@ const cards = computed(() =>
             <small>next 7 days</small>
           </span>
         </header>
-        <ResortTravel :resort="c.r" />
+        <ResortTravel :resort="c.r" :home-city="homeCity" @setup="emit('account')" />
         <ol class="week">
           <li v-for="x in c.days" :key="x.day" :class="{ fresh: (x.w?.snowCm ?? 0) >= 5 }">
             <span class="wd">{{ formatWeekday(x.day).slice(0, 2) }}</span>

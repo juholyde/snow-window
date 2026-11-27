@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { RESORTS } from '../config/resorts'
+import { RESORTS, type Resort } from '../config/resorts'
 import { formatLong } from '../lib/dates'
 import type { Person } from '../lib/overlap'
 import type { Range } from '../lib/selection'
@@ -13,12 +13,16 @@ const props = defineProps<{
   mine: Person[]
   range: Range | null
   resortId: string
+  /** The crew's resorts: the chips. The chosen one always shows, even outside them. */
+  resorts: Resort[]
+  homeCity: string | null
   busy: boolean
 }>()
 const emit = defineEmits<{
   create: [personId: string, draft: TripDraft]
   range: [range: Range | null]
   resort: [id: string]
+  account: []
 }>()
 
 const as = ref(props.mine[0]?.id ?? '')
@@ -32,6 +36,7 @@ const d = reactive({ title: '', note: '' })
 
 const base = import.meta.env.BASE_URL
 const resort = computed(() => RESORTS.find((r) => r.id === props.resortId) ?? null)
+const chips = computed(() => (resort.value && !props.resorts.some((r) => r.id === resort.value?.id) ? [resort.value, ...props.resorts] : props.resorts))
 const n = computed(() => (props.range ? nights(props.range) : 0))
 const cover = computed(() => (props.range ? coverage(props.range, props.people) : null))
 const when = computed(() => {
@@ -72,7 +77,7 @@ function submit() {
             <small>{{ resort.region }} · {{ resort.elevation }} m</small>
           </div>
         </div>
-        <ResortTravel :resort="resort" />
+        <ResortTravel :resort="resort" :home-city="homeCity" @setup="emit('account')" />
       </section>
     </header>
 
@@ -87,7 +92,7 @@ function submit() {
     <fieldset class="field resort-chips">
       <legend>Resort <small>the timeline shows its forecast</small></legend>
       <div class="chips">
-        <label v-for="r in RESORTS" :key="r.id" class="chip" :class="{ on: r.id === resortId }">
+        <label v-for="r in chips" :key="r.id" class="chip" :class="{ on: r.id === resortId }">
           <input type="radio" name="resort" :value="r.id" :checked="r.id === resortId" @change="emit('resort', r.id)" />
           {{ r.name }}
         </label>

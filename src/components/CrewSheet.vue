@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import type { Area } from '../config/resorts'
 import type { Person } from '../lib/overlap'
 import type { Crew } from '../lib/store'
 import AppIcon from './AppIcon.vue'
@@ -21,6 +22,7 @@ const emit = defineEmits<{
   create: []
   account: []
   rename: [name: string]
+  regions: [regions: Area[]]
   copy: []
   reset: []
   remove: [person: Person]
@@ -66,6 +68,7 @@ function onClick(e: MouseEvent) {
         :me="me"
         :busy="busy"
         @rename="(n) => emit('rename', n)"
+        @regions="(r) => emit('regions', r)"
         @copy="emit('copy')"
         @reset="emit('reset')"
         @remove="(p) => emit('remove', p)"

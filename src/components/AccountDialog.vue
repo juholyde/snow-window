@@ -9,7 +9,7 @@ import ProfileFields from './ProfileFields.vue'
 const props = defineProps<{ open: boolean; session: Session; profile: Person | null; busy: boolean; google: boolean; taken?: readonly { name: string; emoji: string }[] }>()
 const emit = defineEmits<{
   close: []
-  profile: [name: string, emoji: string]
+  profile: [name: string, emoji: string, city: string | null]
   save: [email: string]
   signIn: [email: string]
   google: [mode: 'save' | 'signin']
@@ -19,6 +19,7 @@ const emit = defineEmits<{
 const dialog = ref<HTMLDialogElement | null>(null)
 const name = ref('')
 const emoji = ref('')
+const city = ref('')
 const email = ref('')
 const mode = ref<'save' | 'signin'>('save')
 function submitEmail() {
@@ -32,6 +33,7 @@ watch(
     if (open) {
       name.value = props.profile?.name ?? ''
       emoji.value = props.profile?.emoji ?? '⛷️'
+      city.value = props.profile?.homeCity ?? ''
       email.value = ''
       mode.value = props.profile ? 'save' : 'signin'
       dialog.value?.showModal()
@@ -47,9 +49,9 @@ watch(
       <button type="button" class="ghost icon-only" aria-label="Close" @click="emit('close')"><AppIcon name="close" /></button>
     </div>
 
-    <form v-if="profile" class="account-block" @submit.prevent="emit('profile', name, emoji)">
-      <ProfileFields v-model:name="name" v-model:emoji="emoji" :taken="taken" />
-      <button type="submit" class="primary" :disabled="busy || !name.trim() || !emoji.trim()">Save name and avatar</button>
+    <form v-if="profile" class="account-block" @submit.prevent="emit('profile', name, emoji, city || null)">
+      <ProfileFields v-model:name="name" v-model:emoji="emoji" v-model:city="city" :taken="taken" />
+      <button type="submit" class="primary" :disabled="busy || !name.trim() || !emoji.trim()">Save profile</button>
     </form>
 
     <section class="account-block" aria-labelledby="account-sync">

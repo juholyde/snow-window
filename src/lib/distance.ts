@@ -1,3 +1,5 @@
+import { CITIES } from '../config/cities'
+
 /** Distance and travel hints from a home city to a resort, in the browser with no service. */
 export type Point = { lat: number; lon: number }
 export type Hint = { km: number; mode: 'drive' | 'fly'; roadKm?: number; driveMinutes?: number }
@@ -66,4 +68,10 @@ function duration(minutes: number): string {
 export function formatHint(h: Hint): string {
   if (h.mode === 'fly') return `${h.km.toLocaleString('en-US')} km · fly`
   return `${(h.roadKm ?? h.km).toLocaleString('en-US')} km · ~${duration(h.driveMinutes ?? 0)} by car`
+}
+
+/** The hint from a person's home city (by id) to a resort; null when they have none set. */
+export function homeHint(cityId: string | null, resort: Point): Hint | null {
+  const city = CITIES.find((c) => c.id === cityId)
+  return city ? hint(city, resort) : null
 }

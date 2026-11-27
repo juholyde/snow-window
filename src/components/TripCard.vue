@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { RESORTS } from '../config/resorts'
+import { homeHint, formatHint } from '../lib/distance'
 import { addDays, type Day, formatLong } from '../lib/dates'
 import type { Person } from '../lib/overlap'
 import { downloadIcs, tripIcs } from '../lib/ics'
@@ -33,6 +34,17 @@ const emit = defineEmits<{
 
 const resort = computed(() => RESORTS.find((r) => r.id === props.trip.resortId))
 const proposer = computed(() => props.people.find((p) => p.id === props.trip.proposerId))
+/** Everyone with a home city, nearest first: how far each has to go. */
+const homes = computed(() => {
+  const r = resort.value
+  if (!r) return []
+  return props.people
+    .flatMap((p) => {
+      const h = homeHint(p.homeCity, r)
+      return h ? [{ p, h, text: formatHint(h) }] : []
+    })
+    .sort((a, b) => a.h.km - b.h.km)
+})
 const n = computed(() => nights(props.trip))
 const cover = computed(() => coverage(props.trip, props.people))
 const t = computed(() => tally(props.trip, props.people))
@@ -213,6 +225,12 @@ const GROUPS: { id: Answer | 'none'; label: string }[] = [
           <AppIcon name="snow" :size="14" /> {{ snow }} cm forecast
         </span>
       </p>
+      <details v-if="homes.length" class="trip-homes">
+        <summary>How far for each of you <small>{{ homes.length }}</small></summary>
+        <ul>
+          <li v-for="x in homes" :key="x.p.id" class="home"><span aria-hidden="true">{{ x.p.emoji }}</span> <span class="home-name">{{ x.p.name }}</span> <small>{{ x.text }}</small></li>
+        </ul>
+      </details>
       <p v-if="trip.note" class="trip-note">{{ trip.note }}</p>
 
       <StayPanel v-if="trip.status === 'on' && n > 0" :trip="trip" :people="people" :me="mine[0]?.id ?? null" :busy="busy" @act="(a) => emit('stay', a)" />

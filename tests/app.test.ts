@@ -281,3 +281,49 @@ it('one person offers a car and another takes a seat, then a full car stays full
   await click(buttonNamed('Leave seat'))
   expect((await storeFor('ben').loadCrew(seed.crewId)).trips[0]?.cars[0]?.riders).toEqual([])
 })
+
+const chips = () => [...document.querySelectorAll('.resort-chips .chip')].map((c) => c.textContent?.trim())
+const toggleArea = async (label: string) => {
+  const box = [...document.querySelectorAll<HTMLInputElement>('.crew-regions input')].find((i) => i.parentElement?.textContent?.includes(label))
+  if (!box) throw new Error(`No area ${label}`)
+  box.checked = !box.checked
+  box.dispatchEvent(new Event('change'))
+  await flushPromises()
+}
+
+it('crew areas decide the resort chips: Spain by default, Alps added, Spain removed, never none', async () => {
+  await seedCrew('Pyrenees gang', [{ id: 'ann', name: 'Ann' }])
+  await openApp('ann')
+  await click(tab(/Trips/))
+  expect(chips()).toContain('Baqueira-Beret')
+  expect(chips()).not.toContain('Zermatt')
+
+  await toggleArea('Alps')
+  expect(chips()).toContain('Zermatt')
+  expect(chips()).toContain('Baqueira-Beret')
+
+  await toggleArea('Spain')
+  expect(chips()).toContain('Zermatt')
+  expect(chips()).not.toContain('Baqueira-Beret')
+  // The selected resort moved off Spain with it, and the last area can't be turned off.
+  expect(document.querySelector('.resort-chips .chip.on')).not.toBeNull()
+  const only = [...document.querySelectorAll<HTMLInputElement>('.crew-regions input')].filter((i) => i.checked)
+  expect(only.map((i) => i.disabled)).toEqual([true])
+  expect((await storeFor('ann').crews())[0]?.regions).toEqual(['alps'])
+})
+
+it('a home city shows my distance on the suggest form, and without one a link opens the profile', async () => {
+  await seedCrew('Pyrenees gang', [{ id: 'ann', name: 'Ann' }])
+  await openApp('ann')
+  await click(tab(/Trips/))
+  expect(document.querySelector('.pick-place .t-setup')).not.toBeNull()
+  await click(document.querySelector('.pick-place .t-setup'))
+  expect(document.querySelector('dialog.account')).not.toBeNull()
+  closeApps()
+
+  await storeFor('ann').setHomeCity('madrid')
+  await openApp('ann')
+  await click(tab(/Trips/))
+  expect(document.querySelector('.pick-place .t-setup')).toBeNull()
+  expect(document.querySelector('.pick-place .t-mine')?.textContent).toMatch(/From Madrid: .*km/)
+})

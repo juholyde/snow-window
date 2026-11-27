@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { SEASON } from '../config/calendar'
+import type { Resort } from '../config/resorts'
 import { type Day, formatLong } from '../lib/dates'
 import { type Person, stretchPicks } from '../lib/overlap'
 import { type Range, span } from '../lib/selection'
@@ -32,6 +33,9 @@ const props = defineProps<{
   counts: Map<Day, number>
   forecasts: Forecasts | null
   resortId: string
+  /** The current crew's resorts. */
+  resorts: Resort[]
+  homeCity: string | null
   range: Range | null
   busy: boolean
   fresh?: string | null
@@ -48,6 +52,7 @@ const emit = defineEmits<{
   stay: [action: StayAction]
   car: [action: CarAction]
   announce: [text: string]
+  account: []
 }>()
 
 // Opening Suggest with dates already picked (e.g. from Snow windows) brings them into view.
@@ -87,6 +92,13 @@ async function onViewKey(e: KeyboardEvent) {
 
 // The suggestion's resort drives the forecast row on its timeline.
 const resort = ref(props.resortId)
+// A crew's areas change: a pick outside them gives way to the first allowed resort.
+watch(
+  () => props.resorts,
+  (rs) => {
+    if (rs.length && !rs.some((r) => r.id === resort.value)) resort.value = rs[0]?.id ?? resort.value
+  },
+)
 
 const showCancelled = ref(false)
 const sorted = computed(() => sortTrips(props.trips))
@@ -142,6 +154,7 @@ const waiting = computed(
           :focused="null"
           :highlight="range"
           :resort-id="resort"
+          :resorts="resorts"
           :forecast="forecasts?.[resort] ?? null"
           @resort="(id) => (resort = id)"
           @pick="(r) => emit('range', r)"
@@ -176,9 +189,12 @@ const waiting = computed(
           :mine="mine"
           :range="range"
           :resort-id="resort"
+          :resorts="resorts"
+          :home-city="homeCity"
           :busy="busy"
           @range="(r) => emit('range', r)"
           @resort="(id) => (resort = id)"
+          @account="emit('account')"
           @create="(pid, d) => emit('create', pid, d)"
         />
         <section v-else class="how">

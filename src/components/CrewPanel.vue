@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { Person } from '../lib/overlap'
+import { AREAS, type Area } from '../config/resorts'
 import { MAX_CREW_NAME, MAX_PEOPLE } from '../lib/rules'
 import type { Crew } from '../lib/store'
 import AppIcon from './AppIcon.vue'
@@ -9,6 +10,7 @@ import AppIcon from './AppIcon.vue'
 const props = defineProps<{ crew: Crew; people: Person[]; me: string; busy: boolean }>()
 const emit = defineEmits<{
   rename: [name: string]
+  regions: [regions: Area[]]
   copy: []
   reset: []
   remove: [person: Person]
@@ -21,6 +23,12 @@ const draft = ref('')
 function startRename() {
   draft.value = props.crew.name
   renaming.value = true
+}
+/** Any member can change them; the last area left on can't be turned off. */
+const onlyOne = (a: Area) => props.crew.regions.length === 1 && props.crew.regions.includes(a)
+function toggleArea(a: Area, on: boolean) {
+  const next = on ? [...props.crew.regions, a] : props.crew.regions.filter((r) => r !== a)
+  if (next.length) emit('regions', next)
 }
 function saveName() {
   if (draft.value.trim() && draft.value.trim() !== props.crew.name) emit('rename', draft.value)
@@ -59,6 +67,16 @@ function saveName() {
         </button>
       </li>
     </ul>
+
+    <fieldset class="crew-regions" :disabled="busy">
+      <legend>Where you ski <small>resorts shown to this crew</small></legend>
+      <div class="chips">
+        <label v-for="a in AREAS" :key="a.id" class="chip" :class="{ on: crew.regions.includes(a.id) }">
+          <input type="checkbox" :checked="crew.regions.includes(a.id)" :disabled="onlyOne(a.id)" @change="toggleArea(a.id, ($event.target as HTMLInputElement).checked)" />
+          {{ a.label }}
+        </label>
+      </div>
+    </fieldset>
 
     <div class="crew-invite">
       <button type="button" class="primary" :disabled="people.length >= MAX_PEOPLE" @click="emit('copy')">

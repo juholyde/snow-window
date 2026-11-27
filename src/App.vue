@@ -10,7 +10,7 @@ import ResortsTab from './components/ResortsTab.vue'
 import TripsTab, { type TripsView } from './components/TripsTab.vue'
 import WelcomeCard from './components/WelcomeCard.vue'
 import { HOLIDAYS, KEY_DATES, SEASON } from './config/calendar'
-import { RESORTS } from './config/resorts'
+import { type Area, RESORTS } from './config/resorts'
 import { type Day, eachDay, formatDayMonth, formatLong, todayLocal } from './lib/dates'
 import { bestWindows, countByDay, markDay, type Person, type TripWindow } from './lib/overlap'
 import { type StepKind, nextStep } from './lib/nextStep'
@@ -68,6 +68,17 @@ async function refreshForecast() {
 const timeline = ref<InstanceType<typeof AvailabilityTimeline> | null>(null)
 
 const crew = computed(() => crews.value.find((c) => c.id === crewId.value) ?? null)
+/** The resorts offered to this crew: those in its areas. Existing trips and the forecast still cover all of them. */
+const allowed = computed(() => (crew.value ? RESORTS.filter((r) => crew.value?.regions.includes(r.area)) : RESORTS))
+// A selected resort outside the crew's areas gives way to the first allowed one.
+watch(
+  allowed,
+  (rs) => {
+    if (rs.length && !rs.some((r) => r.id === resortId.value)) pickResort(rs[0]?.id ?? resortId.value)
+  },
+  { immediate: true },
+)
+const homeCity = computed(() => profile.value?.homeCity ?? null)
 /** The welcome card shows with no crew, while an invite waits, or while starting another crew. */
 const welcome = computed(() => Boolean(session.value) && (!crew.value || Boolean(preview.value) || creating.value))
 const me = computed(() => session.value?.userId ?? '')
@@ -253,6 +264,10 @@ async function copyInvite() {
   }
 }
 
+async function setRegions(regions: Area[]) {
+  const id = crewId.value
+  if (id && (await act(() => props.store.setCrewRegions(id, regions)))) await loadMine()
+}
 async function renameCrew(name: string) {
   const id = crewId.value
   if (id && await act(() => props.store.renameCrew(id, name), 'Renamed.')) await loadMine()
@@ -279,8 +294,12 @@ async function leaveCrew() {
   await loadMine()
 }
 
-async function saveProfile(name: string, emoji: string) {
-  if (!(await act(() => props.store.saveProfile(name, emoji), 'Saved.'))) return
+async function saveProfile(name: string, emoji: string, city: string | null) {
+  const saved = await act(async () => {
+    await props.store.saveProfile(name, emoji)
+    if (city !== (profile.value?.homeCity ?? null)) await props.store.setHomeCity(city)
+  }, 'Saved.')
+  if (!saved) return
   profile.value = await props.store.profile()
   await refresh()
 }
@@ -645,6 +664,7 @@ onBeforeUnmount(() => {
             :focused="focused"
             :highlight="highlight"
             :resort-id="resortId"
+            :resorts="allowed"
             :forecast="forecasts?.[resortId] ?? null"
             @resort="pickResort"
             @change="change"
@@ -721,6 +741,8 @@ onBeforeUnmount(() => {
           :counts="counts"
           :forecasts="forecasts"
           :resort-id="resortId"
+          :resorts="allowed"
+          :home-city="homeCity"
           :range="tripRange"
           :busy="busy"
           :fresh="freshTrip"
@@ -735,11 +757,12 @@ onBeforeUnmount(() => {
           @announce="announce"
           @stay="stayAction"
           @car="carAction"
+          @account="openAccount"
         />
       </section>
 
       <section v-if="tab === 'resorts'" id="panel-resorts" class="panel scroll-panel" role="tabpanel" aria-labelledby="tab-resorts">
-        <ResortsTab :forecasts="forecasts" :resort-id="resortId" :error="forecastError" @use="useResort" />
+        <ResortsTab :forecasts="forecasts" :resort-id="resortId" :resorts="allowed" :home-city="homeCity" :error="forecastError" @use="useResort" @account="accountOpen = true" />
         <p class="credits">
           Weather from <a href="https://open-meteo.com/" rel="noopener" target="_blank">Open-Meteo</a>, 16 days ahead, refreshed every 30 minutes.
           Webcams open on each resort's own site.
@@ -763,6 +786,7 @@ onBeforeUnmount(() => {
       @create="newCrew"
       @account="openAccount"
       @rename="renameCrew"
+      @regions="setRegions"
       @copy="copyInvite"
       @reset="resetInvite"
       @remove="removeMember"
